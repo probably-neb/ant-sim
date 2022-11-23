@@ -1,77 +1,179 @@
+<head>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/tachyons@4.12.0/css/tachyons.min.css"
+  />
+</head>
 <p>Ben Kunkle</p>
 <p>BMED-213-71-2228 - Bioengineering Fundamentals</p>
+<center>
+  <h3>Anthill Representations of Peer-to-peer Networks</h3>
+</center>
+<hr />
 
-<h3 id="a-process-involving-aspects-of-bio-mimetic-design">1: A process
-involving aspects of bio mimetic design</h3>
-<p>The internet is an incredibly large network of smaller computer
-networks. For the most part, these networks are “client-server”
-networks, described by Harris Andrea as “a centralized network in which
-[a] server hosts, provides, and maintains the majority of the client’s
-data and services”. Another kind of network is called a “peer-to-peer”
-network. In a peer-to-peer (P2P) network computers (called peers in this
-context) both send and receive data. P2P networks are often used for
-file sharing, where each peer will be receiving the files it wants from
-other peers on the network and sharing the files it has already.
-Although many aspects of networks in general involve aspects of bio
-mimetic design, I will focus on peer-to-peer networking in this
-piece.</p>
-<h3
-id="a-biological-system-with-properties-that-can-benefit-peer-to-peer-networking">2:
-A biological system with properties that can benefit peer-to-peer
-networking</h3>
-<p>A large problem with P2P networking is figuring out where to get the
-data you want from within the network. There are many ways of searching
-for the desired data including many “deterministic” approaches as
-described by S. Apel and E. Buchmann however they claim these approaches
-“leave aside that: peers want to obtain queries at different rates, some
-keys are more popular than others, and peers can be less reliable”
-(section 4). To solve this problem Apel and Buchmann as well as others
-took inspiration from anthills. Ants have to deal with similar problems
-when searching for food. The food could be anywhere and some food
-sources are better than others. To solve this problem ants leave
-pheromones in their path. Future ants can then simply follow the
-smelliest path to go where the most of their fellow ants have gone. This
-allows them to quickly organize and accomplish complicated tasks
-collaboratively without requiring a queen to control them all.</p>
-<h3
-id="how-properties-of-anthills-can-actually-be-implemented-in-a-peer-to-peer-network">3:
-how properties of anthills can actually be implemented in a peer-to-peer
-network</h3>
-<p>The ants pheromone system can be implemented in a P2P network in
-various albeit similar ways, however I will go over the approach taken
-by A. Montresor and O. Babaoglu in the aptly named Anthill framework. In
-this framework each peer is thought of as an Anthill with various ants
-representing the tasks the anthill is capable of such as retrieving a
-file. When these ants are called upon to carry out actions, they leave
-information related to their current task at each anthill they visit.
-This data left behind is the pheromones that can guide future ants
-trying to accomplish the same task. Through this system efficient
-pathways to popular sites, files, etc are formed so they are easier and
-take less time to find.</p>
-<h3 id="limitations-of-anthill-inspired-peer-to-peer-networks">4:
-limitations of anthill inspired peer-to-peer networks</h3>
-<p>As described by S. Apel and E. Buchmann “some drawbacks arise:
-Organic systems cannot be fully controlled, their behavior is not really
-predictable, and their adaptation and evolution cannot be completely
-formally specified, verified, and validated (in a usable and practicable
-way)” (section 3.3) Since these problems are inherent to the mimicry of
-biological systems, there isn’t a new technology or advancement that
-could solve them. The biggest problem listed I believe is the fact that
-it is unpredictable and inconsistent. Some pages and files will load
-very quickly because they are very popular, however less visited sites
-will take a long time to load as the ants will have to work much harder
-to find them. I can foresee this leading people on the network to avoid
-less popular sites because they know it will be slow, and stick to the
-popular sites that load fast making it even harder for newcomers to grow
-their user base and compete with top sites.</p>
+<body class="ma3">
+  <h5>Introduction to Peer to Peer Networks</h5>
+  <p>
+    Many of the websites and services we use on a day to day basis are housed
+    and run on centralized servers. While centralized servers have their
+    beneifits, by virtue of being centralized they come with comprimises. A
+    centralized server means governments or individuals looking to intercept
+    certain traffic or shut down a service have a single target.
+  </p>
+
+  <p>
+    An anternative is the Peer-to-peer (P2P) network. In a P2P network users
+    talk directly to each other rather than through a centralized server.
+  </p>
+  <div class="flex">
+    <div class="fl w-50 ma2">
+      <figure>
+        <img src="site-assets/p2p.png" style="width: auto; height: auto" />
+        <figcaption>
+          <i
+            >An illustration of a Peer-to-peer Network
+            <a href="https://proton.me/blog/centalized-vs-p2p-protondrive"
+              >source</a
+            ></i
+          >
+        </figcaption>
+      </figure>
+    </div>
+    <div class="fl w-50 ma2">
+      <figure>
+        <img
+          src="site-assets/centralized.png"
+          style="width: auto; height: auto"
+        />
+        <figcaption>
+          <i
+            >An illustration of a centralized Network
+            <a href="https://proton.me/blog/centalized-vs-p2p-protondrive"
+              >source</a
+            ></i
+          >
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+  <i>
+    <p>
+      A full comparison between the two is beyond the scope of this piece. For
+      more in depth comparisons of Peer-to-peer and centralized networks as well
+      as examples of how Peer-to-peer networks are used check out these
+      articles:
+    </p>
+    <ul>
+      <li>
+        <a
+          href="https://www.cnn.com/2014/10/16/tech/mobile/tomorrow-transformed-firechat/index.html"
+        >
+          Hong Kong Protestors using A P2P Network to plan protests quickly and
+          avoid censorship from the chinese government
+        </a>
+      </li>
+
+      <li>
+        <a href="https://proton.me/blog/centalized-vs-p2p-protondrive">
+          A comparison between P2P and centralized networks for cloud file
+          storage
+        </a>
+      </li>
+    </ul>
+  </i>
+
+  <h5>A Problem With Peer-to-peer Networks</h5>
+  <p>
+    Figuring out where to get the data you want, such as a video, file, or
+    website within a P2P network can be difficult as there isn't necessarily a
+    centralized system keeping track of what urls lead where. There are many
+    ways of searching for the desired data including many “deterministic”
+    approaches such as
+    <a href="https://en.wikipedia.org/wiki/BitTorrent"
+      >the well known BitTorrent protocol</a
+    >. However S. Apel and E. Buchmann claim these approaches “leave aside that:
+    peers want to obtain queries at different rates, some keys are more popular
+    than others, and peers can be less reliable” (section 4).</p> 
+  <p>To solve this problem S. Apel and E. Buchmann as well as others took inspiration from ants. Ants have to
+    deal with similar problems when searching for food. The food could be
+    anywhere and some food sources are better than others. To solve this problem
+    ants leave pheromones in their path. Future ants can then simply follow the
+    smelliest path to go where the most of their fellow ants have gone. This
+    allows them to quickly organize and accomplish complicated tasks
+    collaboratively without requiring a queen to control them all.
+  </p>
+
+  <p>
+    To explore this idea I decided to create a program that simulated an Anthill
+    inspired P2P network
+  </p>
+  <center>
+      <h4>Implementing an Anthill Inspired P2P Network</h4>
+  </center>
+  <p>
+    The ants pheromone system can be implemented in a P2P network in various
+    albeit similar ways, however I decided to use the approach taken by A.
+    Montresor and O. Babaoglu in the aptly named Anthill framework for the overall design, with some implementation details taken from the excellent <a href="https://www.youtube.com/watch?v=X-iSQQgOd1A">Sebastian Lague</a> Video on simulating ants and slime molds.
+  </p>
+    In this framework each "peer" or participant in the network is thought of as an Anthill with various ants
+    representing the tasks the anthill is capable of such as retrieving a website.
+    When these ants are called upon to carry out actions, they leave information
+    related to their current task at each anthill they visit. This data left
+    behind is the pheromones that can guide future ants trying to accomplish the
+    same task. Ideally, through this system efficient pathways to popular sites, files,
+    etc are formed so they are easier and take less time to find.<p>
+  </p>
+  <p>The simulation I created goes through the following steps</p>
+  <ol>
+      <li>Create a "map" with circles of various colors to represent each nest</li>
+      <br>
+      <center><img src="./site-assets/map-no-ants.png" style="width: 50%; height: 50%" /></center>
+      <br>
+      <li>Begin iterating through the following steps
+          <br><br>
+          <ol>
+              <li>For each nest randomly decide whether to make a "request". <br>This represents getting a website, downloading a file, sending a chat message etc.</li>
+          <br>
+              <li>If the nest is making a request, randomly choose another nest to make the to. This represents the destination of the request i.e. who you are sending the chat message too or who is hosting the website</li>
+              <li>Make ants (todo)</li>
+          </ol>
+      </li>
+  </ol>
+
+  <!-- <h3 id="limitations-of-anthill-inspired-peer-to-peer-networks"> -->
+  <!--   4: limitations of anthill inspired peer-to-peer networks -->
+  <!-- </h3> -->
+  <!-- <p> -->
+  <!--   As described by S. Apel and E. Buchmann “some drawbacks arise: Organic -->
+  <!--   systems cannot be fully controlled, their behavior is not really -->
+  <!--   predictable, and their adaptation and evolution cannot be completely -->
+  <!--   formally specified, verified, and validated (in a usable and practicable -->
+  <!--   way)” (section 3.3) Since these problems are inherent to the mimicry of -->
+  <!--   biological systems, there isn’t a new technology or advancement that could -->
+  <!--   solve them. The biggest problem listed I believe is the fact that it is -->
+  <!--   unpredictable and inconsistent. Some pages and files will load very quickly -->
+  <!--   because they are very popular, however less visited sites will take a long -->
+  <!--   time to load as the ants will have to work much harder to find them. I can -->
+  <!--   foresee this leading people on the network to avoid less popular sites -->
+  <!--   because they know it will be slow, and stick to the popular sites that load -->
+  <!--   fast making it even harder for newcomers to grow their user base and compete -->
+  <!--   with top sites. -->
+  <!-- </p> -->
+</body>
 <hr />
 <p>Citations:</p>
-<p>Andrea, Harris. “Comparison of ‘Peer-to-peer’ Vs ‘Client-server’
-Network Models.” Networks Training,
-www.networkstraining.com/peer-to-peer-vs-client-server-network. Accessed
-3 Oct. 2022.</p>
-<p>Apel, Sven, and Erik Buchmann. “Biology-inspired optimizations of
-peer-to-peer overlay networks.” (2005): 199-205.</p>
-<p>Montresor, Alberto, and Ozalp Babaoglu. “Biology-inspired approaches
-to peer-to-peer computing in bison.” Intelligent Systems Design and
-Applications. Springer, Berlin, Heidelberg, 2003. 515-522.</p>
+<p>
+  Andrea, Harris. “Comparison of ‘Peer-to-peer’ Vs ‘Client-server’ Network
+  Models.” Networks Training,
+  www.networkstraining.com/peer-to-peer-vs-client-server-network. Accessed 3
+  Oct. 2022.
+</p>
+<p>
+  Apel, Sven, and Erik Buchmann. “Biology-inspired optimizations of peer-to-peer
+  overlay networks.” (2005): 199-205.
+</p>
+<p>
+  Montresor, Alberto, and Ozalp Babaoglu. “Biology-inspired approaches to
+  peer-to-peer computing in bison.” Intelligent Systems Design and Applications.
+  Springer, Berlin, Heidelberg, 2003. 515-522.
+</p>
