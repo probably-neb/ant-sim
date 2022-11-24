@@ -13,6 +13,7 @@ fn main() {
             },
             ..default()
         }));
+
         #[cfg(feature = "debug")]
         app.add_plugin(WorldInspectorPlugin::new());
             // .register_inspectable::<PheromoneManager>();
@@ -26,11 +27,13 @@ fn main() {
         .add_startup_system(ant::load_ant_texture)
         .add_system(nest::food_request_system)
         .add_system(ant::animate_ant)
-        .add_system(ant::move_ant)
+        // .add_system(ant::ant_wander)
+        .add_system(ant::move_ant_network)
         .add_system(pheromones::color_and_fade_pheromones)
         // .add_system(pheromones::print_angle)
-        .add_system(print_camera)
-        .add_system(nest::ant_nest_interactions)
+        // .add_system(print_camera)
+        .add_system(nest::ant_nest_network_interactions)
+        .add_system(nest::fade_nest_network_pheremones)
         .run();
 }
 

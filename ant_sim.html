@@ -3,7 +3,15 @@
     rel="stylesheet"
     href="https://unpkg.com/tachyons@4.12.0/css/tachyons.min.css"
   />
+  <!-- mathjax imports -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script
+    id="MathJax-script"
+    async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+  ></script>
 </head>
+
 <p>Ben Kunkle</p>
 <p>BMED-213-71-2228 - Bioengineering Fundamentals</p>
 <center>
@@ -25,37 +33,18 @@
     An anternative is the Peer-to-peer (P2P) network. In a P2P network users
     talk directly to each other rather than through a centralized server.
   </p>
-  <div class="flex">
-    <div class="fl w-50 ma2">
       <figure>
-        <img src="site-assets/p2p.png" style="width: auto; height: auto" />
+        <img src="site-assets/cent-vs-p2p.png" style="width: auto; height: auto" />
         <figcaption>
           <i
-            >An illustration of a Peer-to-peer Network
-            <a href="https://proton.me/blog/centalized-vs-p2p-protondrive"
+            >A visual comparison between a centralized and a peer-to-peer Network
+            <a href="https://www.networkstraining.com/peer-to-peer-vs-client-server-network/"
               >source</a
             ></i
           >
         </figcaption>
       </figure>
-    </div>
-    <div class="fl w-50 ma2">
-      <figure>
-        <img
-          src="site-assets/centralized.png"
-          style="width: auto; height: auto"
-        />
-        <figcaption>
-          <i
-            >An illustration of a centralized Network
-            <a href="https://proton.me/blog/centalized-vs-p2p-protondrive"
-              >source</a
-            ></i
-          >
-        </figcaption>
-      </figure>
-    </div>
-  </div>
+  
   <i>
     <p>
       A full comparison between the two is beyond the scope of this piece. For
@@ -88,19 +77,22 @@
     website within a P2P network can be difficult as there isn't necessarily a
     centralized system keeping track of what urls lead where. There are many
     ways of searching for the desired data including many “deterministic”
-    approaches such as
+    approaches such as the well known 
     <a href="https://en.wikipedia.org/wiki/BitTorrent"
-      >the well known BitTorrent protocol</a
-    >. However S. Apel and E. Buchmann claim these approaches “leave aside that:
+      >BitTorrent protocol</a
+  >. However <a href="https://www.researchgate.net/publication/220109707_Biology-Inspired_Optimizations_of_Peer-to-Peer_Overlay_Networks">S. Apel and E. Buchmann </a> claim these approaches “leave aside that:
     peers want to obtain queries at different rates, some keys are more popular
-    than others, and peers can be less reliable” (section 4).</p> 
-  <p>To solve this problem S. Apel and E. Buchmann as well as others took inspiration from ants. Ants have to
-    deal with similar problems when searching for food. The food could be
-    anywhere and some food sources are better than others. To solve this problem
-    ants leave pheromones in their path. Future ants can then simply follow the
-    smelliest path to go where the most of their fellow ants have gone. This
-    allows them to quickly organize and accomplish complicated tasks
-    collaboratively without requiring a queen to control them all.
+    than others, and peers can be less reliable” (section 4).
+  </p>
+  <p>
+  To solve this problem S. Apel and E. Buchmann as well as <a href="https://link.springer.com/chapter/10.1007/978-3-540-44999-7_49">others</a> took
+    inspiration from ants. Ants have to deal with similar problems when
+    searching for food. The food could be anywhere and some food sources are
+    better than others. To solve this problem ants leave pheromones in their
+    path. Future ants can then simply follow the smelliest path to go where the
+    most of their fellow ants have gone. This allows them to quickly organize
+    and accomplish complicated tasks collaboratively without requiring a queen
+    to control them all.
   </p>
 
   <p>
@@ -108,72 +100,134 @@
     inspired P2P network
   </p>
   <center>
-      <h4>Implementing an Anthill Inspired P2P Network</h4>
+    <h4>Implementing an Anthill Inspired P2P Network</h4>
   </center>
   <p>
     The ants pheromone system can be implemented in a P2P network in various
     albeit similar ways, however I decided to use the approach taken by A.
-    Montresor and O. Babaoglu in the aptly named Anthill framework for the overall design, with some implementation details taken from the excellent <a href="https://www.youtube.com/watch?v=X-iSQQgOd1A">Sebastian Lague</a> Video on simulating ants and slime molds.
+    Montresor and O. Babaoglu in the aptly named Anthill framework for the
+    overall design, with some implementation details taken from the excellent
+    <a href="https://www.youtube.com/watch?v=X-iSQQgOd1A">Sebastian Lague</a>
+    Video on simulating ants and slime molds.
   </p>
-    In this framework each "peer" or participant in the network is thought of as an Anthill with various ants
-    representing the tasks the anthill is capable of such as retrieving a website.
-    When these ants are called upon to carry out actions, they leave information
-    related to their current task at each anthill they visit. This data left
-    behind is the pheromones that can guide future ants trying to accomplish the
-    same task. Ideally, through this system efficient pathways to popular sites, files,
-    etc are formed so they are easier and take less time to find.<p>
-  </p>
+  In this framework each "peer" or participant in the network is thought of as
+  an Anthill with various ants representing the tasks the anthill is capable of
+  such as retrieving a website. When these ants are called upon to carry out
+  actions, they leave information related to their current task at each anthill
+  they visit. This data left behind is the pheromones that can guide future ants
+  trying to accomplish the same task. Ideally, through this system efficient
+  pathways to popular sites, files, etc are formed so they are easier and take
+  less time to find.
+  <p></p>
   <p>The simulation I created goes through the following steps</p>
-  <ol>
-      <li>Create a "map" with circles of various colors to represent each nest</li>
-      <br>
-      <center><img src="./site-assets/map-no-ants.png" style="width: 50%; height: 50%" /></center>
-      <br>
-      <li>Begin iterating through the following steps
-          <br><br>
-          <ol>
-              <li>For each nest randomly decide whether to make a "request". <br>This represents getting a website, downloading a file, sending a chat message etc.</li>
-          <br>
-              <li>If the nest is making a request, randomly choose another nest to make the to. This represents the destination of the request i.e. who you are sending the chat message too or who is hosting the website</li>
-              <li>Make ants (todo)</li>
-          </ol>
-      </li>
-  </ol>
+  <ol type="A">
+    <li>
+      Create a "map" with circles of various colors to represent each nest
+    </li>
+    <br />
+    <center>
+      <figure>
+        <img
+          src="./site-assets/map-no-ants.png"
+          style="width: auto; height: auto"
+        />
+        <figcaption><i>The empty map</i></figcaption>
+      </figure>
+    </center>
+    <br />
 
-  <!-- <h3 id="limitations-of-anthill-inspired-peer-to-peer-networks"> -->
-  <!--   4: limitations of anthill inspired peer-to-peer networks -->
-  <!-- </h3> -->
-  <!-- <p> -->
-  <!--   As described by S. Apel and E. Buchmann “some drawbacks arise: Organic -->
-  <!--   systems cannot be fully controlled, their behavior is not really -->
-  <!--   predictable, and their adaptation and evolution cannot be completely -->
-  <!--   formally specified, verified, and validated (in a usable and practicable -->
-  <!--   way)” (section 3.3) Since these problems are inherent to the mimicry of -->
-  <!--   biological systems, there isn’t a new technology or advancement that could -->
-  <!--   solve them. The biggest problem listed I believe is the fact that it is -->
-  <!--   unpredictable and inconsistent. Some pages and files will load very quickly -->
-  <!--   because they are very popular, however less visited sites will take a long -->
-  <!--   time to load as the ants will have to work much harder to find them. I can -->
-  <!--   foresee this leading people on the network to avoid less popular sites -->
-  <!--   because they know it will be slow, and stick to the popular sites that load -->
-  <!--   fast making it even harder for newcomers to grow their user base and compete -->
-  <!--   with top sites. -->
-  <!-- </p> -->
-</body>
-<hr />
-<p>Citations:</p>
-<p>
-  Andrea, Harris. “Comparison of ‘Peer-to-peer’ Vs ‘Client-server’ Network
-  Models.” Networks Training,
-  www.networkstraining.com/peer-to-peer-vs-client-server-network. Accessed 3
-  Oct. 2022.
-</p>
-<p>
-  Apel, Sven, and Erik Buchmann. “Biology-inspired optimizations of peer-to-peer
-  overlay networks.” (2005): 199-205.
-</p>
-<p>
-  Montresor, Alberto, and Ozalp Babaoglu. “Biology-inspired approaches to
-  peer-to-peer computing in bison.” Intelligent Systems Design and Applications.
-  Springer, Berlin, Heidelberg, 2003. 515-522.
-</p>
+    <li>
+      For each nest randomly decide whether to make a <var>request</var>.
+      <br />This represents getting a website, downloading a file, sending a
+      chat message etc.
+    </li>
+    <br />
+    If the nest is making a request:
+    <ul>
+      <li>
+        Randomly choose a color representing the desired data. This color is
+        chosen from the list of nest colors
+      </li>
+      <li>
+        Create an ant. This operates as the <var>request</var>. Exploring other
+        nests until it finds the nest of the desired color (i.e. containing the
+        desired data).<br />It then brings an orb of that color back to it's
+        parent nest.
+      </li>
+    </ul>
+  </ol>
+  <p>The ants logic while wandering is as follows:</p>
+  <ol>
+    <li>
+      for all the nests the ant <i>could</i> travel to: evaluate how good of a
+      next place to go it is.<br />
+      this is calculated as $$f_d \cdot f_r \cdot f_p$$ where:
+      <ul>
+        <li>
+          \(f_d\) is the factor for distance: $$
+          \left(\frac{1}{w_d}\right)^{p_d} $$ where \(w_d\) is the distance from
+          ant to nest
+        </li>
+        <br />
+        <li>
+          \(f_r\) is the factor for how recent the ant visited the nest
+          calculated from: $$ \left(\frac{1}{w_r}\right)^{p_r} $$ where:
+          <ul>
+            <li>\(n\) is the number of times we've visited the nest</li>
+            <li>
+              \(i_n\) is the number of steps we've taken since visiting the nest
+              for the \(i\)'th time
+            </li>
+            <li>and \(w_r = \prod_{i=0}^n\frac{1}{i_n}\)</li>
+          </ul>
+        </li>
+        <br />
+        <li>
+          and \(f_p\) is the factor for the pheromone strength of the nest:$$
+          (w_p)^{p_p}$$ where \(w_p\) is the strength of target nest color
+          pheromone at the nest in question
+        </li>
+        <br />
+      </ul>
+      The powers \(p_d\), \(p_r\), \(p_p\) are each manaully configured to
+      control the impact each factor has
+    </li>
+    <br />
+    <li>
+      the "goodness" of each nest is then divided by the sum of the goodness'
+      for each nest to get a percentage
+    </li>
+    <br />
+    <li>
+      a nest is then chosen at random where the chance each nest is chosen is
+      the percentage calculated from the goodness
+    </li>
+    <br />
+    <li>
+      the ant then travels to the chosen nest increasing the pheromone strength
+      of the ants <em><b>parent</b></em> nest<br />. The parent nests pheromone
+      strength is increased as a sort of trail of bread crumbs leading back home
+    </li>
+    <br />
+    <li>
+      once the ant reaches it's ultimate target it picks up an orb of the target
+      nests color and wanders home
+    </li>
+  </ol>
+  <p>You can watch a time lapse of the simulation below.</p>
+
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/L8fPJ0AsSRI"
+    title="YouTube video player"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowfullscreen
+  ></iframe>
+
+  <p>
+    <a href="./bin/ant-sim.html"
+      >Or you can run the simulation yourself in the browser!</a
+    >
+  </p>
