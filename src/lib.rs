@@ -15,7 +15,7 @@ pub const FOOD_SIZE_V3: Vec3 = Vec3::new(FOOD_SIZE, FOOD_SIZE, FOOD_HEIGHT as f3
 pub const ANT_SPEED: f32 = 128.;
 pub const ANT_SIZE: f32 = 0.0625;
 pub const ANT_SCALE: Vec3 = Vec3::new(ANT_SIZE, ANT_SIZE, ANT_HEIGHT as f32);
-pub const ANT_ANIMATION_SPEED: f32 = 0.5;
+pub const ANT_ANIMATION_SPEED: f32 = 10.0;
 
 pub const WINDOW_SIZE: f32 = 800.;
 pub const WINDOW_SIZE_X: f32 = WINDOW_SIZE;
@@ -24,6 +24,7 @@ pub const WINDOW_SIZE_Y: f32 = WINDOW_SIZE;
 pub const NUM_NESTS: usize = 15;
 pub const NEST_SIZE: f32 = 16.;
 pub const NEST_FOOD_REQUEST_PROB: f32 = 0.01;
+
 // TODO: make colors a resource
 // TODO: make colors have unique id so mutltiple nests of same color can exist
 // pub const NEST_COLORS: [Color; 10] = [

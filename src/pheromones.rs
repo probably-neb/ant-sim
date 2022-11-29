@@ -316,7 +316,8 @@ pub fn create_pheromone_manager(
                 let id = builder
                     .spawn((
                         MaterialMesh2dBundle {
-                            mesh: meshes.add(shape::Circle::default().into()).into(),
+                            // mesh: meshes.add(shape::Circle::default().into()).into(),
+                            mesh: meshes.add((shape::RegularPolygon{sides: 6, ..default()}).into()).into(),
                             //FIXME: no color here
                             material: default_handle.clone(),
                             transform: Transform::from_xyz(dim_x, dim_y, BOARD_HEIGHT as f32)
@@ -343,35 +344,34 @@ pub fn color_and_fade_pheromones(
             &mut Pheromone,
             &mut Visibility,
             &mut Handle<ColorMaterial>,
-            Option<&NonEmptyTrail>,
         ),
+        With<NonEmptyTrail>,
     >,
     colors: Res<Colors>,
 ) {
     log::warn!("Pheromones were faded");
-    for (id, mut pheromone, mut visibility, mut color_handle, maybe_trail) in &mut pheromones {
-        if let Some(_non_empty_trail) = maybe_trail {
-            // color trail
-            let color_id = pheromone.most_prominent();
-            let cur_color_handle: &Handle<ColorMaterial> = &colors.color_handles[color_id];
-            if cur_color_handle.id() != color_handle.id() {
-                *color_handle = Handle::weak(cur_color_handle.id());
-            }
-
-            // make transparent based on weight
-            // ###############################
-            // let weight = pheromone.weights[color_id];
-            // log::info!("coloring pher with clr: {}", color_id);
-            // let color = colors.colors[color_id];
-            // let material = materials
-            //     .get_mut(&color_handle)
-            //     .expect("pheromones should have a color");
-            //
-            // material.color = *color.clone().set_a(weight);
-            pheromone.fade();
-            visibility.is_visible = !pheromone.is_empty();
+    for (id, mut pheromone, mut visibility, mut color_handle) in &mut pheromones {
+        // color trail
+        let color_id = pheromone.most_prominent();
+        let cur_color_handle: &Handle<ColorMaterial> = &colors.color_handles[color_id];
+        if cur_color_handle.id() != color_handle.id() {
+            *color_handle = Handle::weak(cur_color_handle.id());
         }
+
+        // make transparent based on weight
+        // ###############################
+        // let weight = pheromone.weights[color_id];
+        // log::info!("coloring pher with clr: {}", color_id);
+        // let color = colors.colors[color_id];
+        // let material = materials
+        //     .get_mut(&color_handle)
+        //     .expect("pheromones should have a color");
+        //
+        // material.color = *color.clone().set_a(weight);
+        pheromone.fade();
+        visibility.is_visible = !pheromone.is_empty();
         if !visibility.is_visible {
+            // will prevent this pheromone from being looped over until another ant steps on it
             commands.entity(id).remove::<NonEmptyTrail>();
         }
         // log::info!("pheromone visible: {}", visibility.is_visible);

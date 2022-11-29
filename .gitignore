@@ -1,1 +1,7 @@
 /target
+*.mp4
+bin/ant-sim.d.ts
+bin/ant-sim_bg.wasm.d.ts
+site-assets/make-time-lapse.sh
+site-assets/trim-time-lapse.sh
+perf.data
