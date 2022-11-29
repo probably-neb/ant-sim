@@ -1,6 +1,6 @@
 use crate::{
-    ant, food::Food, Colors, NumAnts, BORDER_PADDING, FOOD_HEIGHT,
-    FOOD_SIZE_V3, MAX_ANTS, NEST_FOOD_REQUEST_PROB, NEST_HEIGHT, NEST_SIZE, NUM_NESTS,
+    ant, food::Food, Colors, NumAnts, BORDER_PADDING, FOOD_HEIGHT, FOOD_SIZE_V3, MAX_ANTS,
+    NEST_FOOD_REQUEST_PROB, NEST_HEIGHT, NEST_SIZE, NUM_NESTS,
 };
 use bevy::{
     ecs::{component::Component, system::Query},
@@ -9,7 +9,10 @@ use bevy::{
     sprite::{collide_aabb::collide, ColorMaterial, MaterialMesh2dBundle},
     utils::default,
 };
-use rand::{seq::{IteratorRandom, SliceRandom}, Rng};
+use rand::{
+    seq::{IteratorRandom, SliceRandom},
+    Rng,
+};
 
 #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Debug, Component, Clone)]
@@ -36,7 +39,7 @@ impl Nest {
         let mut weight = self.color_weights[color];
         weight += ant::SYSTEM_PHEROMONE_GROW_SPEED;
         weight = weight.min(1.0);
-        self.color_weights[color] = weight; 
+        self.color_weights[color] = weight;
     }
     // TODO: pheromone component
     #[inline]
@@ -102,7 +105,7 @@ fn gen_hex_coords(w: u32, h: u32) -> Vec<Vec2> {
         for y in 0..h {
             let x = x as f32;
             let y = y as f32;
-            coords.push(Vec2{x,y});
+            coords.push(Vec2 { x, y });
         }
     }
     return coords;
@@ -119,7 +122,10 @@ pub fn spawn_nests(
 ) {
     let mut rng = rand::thread_rng();
     let window = windows.primary();
-    let bounds = Vec2{ x:window.width(),y: window.height()} -2.*BORDER_PADDING;
+    let bounds = Vec2 {
+        x: window.width(),
+        y: window.height(),
+    } - 2. * BORDER_PADDING;
     let sprite_size = Vec3::new(NEST_SIZE, NEST_SIZE, 0.);
     let mut nests = Vec::with_capacity(NUM_NESTS);
     for i in 0..NUM_NESTS {
@@ -130,14 +136,16 @@ pub fn spawn_nests(
     let hex_bounds = (bounds / NEST_SPREAD).as_uvec2();
     let mut coords: Vec<Vec2> = gen_hex_coords(hex_bounds.x, hex_bounds.y)
         .iter()
-        .map(|&v| -(bounds/2.) + (v*NEST_SPREAD))
+        .map(|&v| -(bounds / 2.) + (v * NEST_SPREAD))
         .collect();
     coords.as_mut_slice().shuffle(&mut rng);
     println!("coords: {:?}", &coords);
     // let color = Color::rgba(0., 0., 0., 0.);
     // FIXME:
     for (color, color_id) in colors.iter() {
-        let c = &coords.pop().expect("NUM_NESTS should always be > num hex coords");
+        let c = &coords
+            .pop()
+            .expect("NUM_NESTS should always be > num hex coords");
         let nest_loc = Vec3::new(c.x, c.y, NEST_HEIGHT as f32);
         let id = commands
             .spawn((
@@ -168,10 +176,11 @@ pub fn fade_nest_network_pheremones(mut nests: Query<&mut Nest>) {
     }
 }
 
+const FOOD_OFFSET: Vec3 = Vec3 {x: 0., y: 80., z: FOOD_HEIGHT as f32};
+
 pub fn ant_nest_network_interactions(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    materials: ResMut<Assets<ColorMaterial>>,
     colors: Res<Colors>,
     mut ants: Query<(Entity, &mut ant::Ant, &Transform)>,
     mut nests: Query<(&Nest, &Transform)>,
@@ -190,25 +199,20 @@ pub fn ant_nest_network_interactions(
                 Some(_) => {
                     if ant.target_color == nest.color {
                         if !ant.carrying_food {
-                            let food_id = commands
-                                .spawn((
+                            // commands.entity(ant_id).add_child(food_id);
+                            commands.entity(ant_id).with_children(|builder| {
+                                builder.spawn((
                                     MaterialMesh2dBundle {
                                         mesh: meshes.add(shape::Circle::default().into()).into(),
                                         material: colors.color_handles[nest.color].clone(),
-                                        transform: Transform::from_translation(Vec3 {
-                                            x: ant_pos.x,
-                                            y: ant_pos.y,
-                                            z: FOOD_HEIGHT as f32,
-                                        })
+                                        transform: Transform::from_translation(FOOD_OFFSET)
                                         .with_scale(FOOD_SIZE_V3),
                                         visibility: Visibility { is_visible: true },
                                         ..default()
                                     },
                                     Food::new(nest.color),
-                                ))
-                                .id();
-
-                            commands.entity(ant_id).add_child(food_id);
+                                ));
+                            });
                             ant.target_color = ant.parent_color;
                             // not parent but this will cause to and from pheromone trails
                             // to be set on the way to target and on the way back
