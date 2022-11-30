@@ -1,8 +1,12 @@
 pub use bevy::{prelude::*, render::color::Color};
-pub mod ant;
-pub mod food;
-pub mod nest;
-pub mod pheromones;
+pub use iyes_loopless::prelude::*;
+// pub mod ant;
+// pub mod food;
+// pub mod nest;
+// pub mod pheromones;
+pub mod network;
+
+const NEST_SPREAD: f32 = BORDER_PADDING;
 
 pub const BOARD_HEIGHT: usize = 0;
 pub const NEST_HEIGHT: usize = 1;
@@ -128,4 +132,34 @@ impl Default for BoundingBox {
     fn default() -> Self {
         return Self { w: 200.0, h: 200.0 };
     }
+}
+
+#[derive(Debug,Clone, Eq, PartialEq, Hash)]
+pub enum GameState {
+    Paused,
+    Play,
+}
+
+pub fn toggle_playing(
+    mut commands: Commands,
+    mut keys: ResMut<Input<KeyCode>>,
+    state: Res<CurrentState<GameState>>
+                 ) {
+    if keys.just_pressed(KeyCode::Space) {
+        let new_state = match state.0
+            {
+                GameState::Paused => GameState::Play,
+                GameState::Play => GameState::Paused,
+            };
+        commands.insert_resource(NextState(new_state));
+        keys.reset(KeyCode::Space);
+    }
+}
+
+
+#[derive(Debug,Clone, Eq, PartialEq, Hash)]
+pub enum GameMode {
+    Menu,
+    AntNetwork,
+    AntWander,
 }
