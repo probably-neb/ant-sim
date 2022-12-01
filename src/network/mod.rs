@@ -85,7 +85,7 @@ impl Plugin for AntNetworkPlugin {
     }
 }
 
-const DISTANCE_POW: f32 = 2.;
+const DISTANCE_POW: f32 = 1.2;
 const PHEROMONE_POW: f32 = 4.;
 const VISITED_POW: f32 = 2.;
 
