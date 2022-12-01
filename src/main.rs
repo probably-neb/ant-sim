@@ -22,6 +22,7 @@ fn main() {
         app.add_startup_system(setup_camera)
         .add_loopless_state(GameMode::AntNetwork)
         .add_loopless_state(GameState::Play)
+        .init_resource::<HexagonMesh>()
         .add_plugin(network::AntNetworkPlugin)
         .add_system(toggle_playing)
         .add_plugin(LogDiagnosticsPlugin::default())

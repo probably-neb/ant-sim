@@ -1,6 +1,6 @@
 use crate::{
     Colors, NumAnts, BORDER_PADDING, FOOD_HEIGHT, FOOD_SIZE_V3, MAX_ANTS,
-    NEST_FOOD_REQUEST_PROB, NEST_HEIGHT, NEST_SIZE, NUM_NESTS, NEST_SPREAD,
+    NEST_FOOD_REQUEST_PROB, NEST_HEIGHT, NEST_SIZE, NUM_NESTS, NEST_SPREAD, HexagonMesh,
 };
 
 use bevy::{
@@ -182,10 +182,10 @@ const FOOD_OFFSET: Vec3 = Vec3 {x: 0., y: 80., z: FOOD_HEIGHT as f32};
 
 pub fn ant_nest_network_interactions(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
     colors: Res<Colors>,
     mut ants: Query<(Entity, &mut ant::Ant, &Transform)>,
     mut nests: Query<(&Nest, &Transform)>,
+    hex_mesh: Res<HexagonMesh>,
 ) {
     for (nest, nest_transform) in &mut nests {
         for (ant_id, mut ant, ant_transform) in &mut ants {
@@ -205,8 +205,8 @@ pub fn ant_nest_network_interactions(
                             commands.entity(ant_id).with_children(|builder| {
                                 builder.spawn((
                                     MaterialMesh2dBundle {
-                                        mesh: meshes.add(shape::Circle::default().into()).into(),
-                                        material: colors.color_handles[nest.color].clone(),
+                                        mesh: hex_mesh.clone_weak().into(),
+                                        material: colors.color_handles[nest.color].clone_weak(),
                                         transform: Transform::from_translation(FOOD_OFFSET)
                                         .with_scale(FOOD_SIZE_V3),
                                         visibility: Visibility { is_visible: true },

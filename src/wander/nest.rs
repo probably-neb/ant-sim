@@ -1,7 +1,7 @@
 use super::{
     ant, food::Food, };
 use crate::{Colors, NumAnts, BORDER_PADDING, FOOD_HEIGHT, FOOD_SIZE_V3, MAX_ANTS,
-    NEST_FOOD_REQUEST_PROB, NEST_HEIGHT, NEST_SIZE, NUM_NESTS,
+    NEST_FOOD_REQUEST_PROB, NEST_HEIGHT, NEST_SIZE, NUM_NESTS, HexagonMesh,
 };
 use bevy::{
     ecs::{component::Component, system::Query},
@@ -175,11 +175,10 @@ const FOOD_OFFSET: Vec3 = Vec3 {x: 0., y: 80., z: FOOD_HEIGHT as f32};
 
 pub fn ant_nest_interactions(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     colors: Res<Colors>,
     mut ants: Query<(Entity, &mut ant::Ant, &Transform)>,
     mut nests: Query<(&Nest, &Transform)>,
+    hex_mesh: Res<HexagonMesh>,
 ) {
     for (nest, nest_transform) in &mut nests {
         for (ant_id, mut ant, ant_transform) in &mut ants {
@@ -194,8 +193,8 @@ pub fn ant_nest_interactions(
                             let food_id = commands
                                 .spawn((
                                     MaterialMesh2dBundle {
-                                        mesh: meshes.add(shape::Circle::default().into()).into(),
-                                        material: colors.color_handles[nest.color].clone(),
+                                        mesh: hex_mesh.clone_weak().into(),
+                                        material: colors.color_handles[nest.color].clone_weak(),
                                         transform: Transform::from_translation(Vec3 {
                                             x: ant_pos.x,
                                             y: ant_pos.y,

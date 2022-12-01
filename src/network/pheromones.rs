@@ -3,7 +3,7 @@ use std::{
     ops::{Index, IndexMut},
 };
 
-use crate::{Colors, BOARD_HEIGHT, NUM_NESTS};
+use crate::{Colors, BOARD_HEIGHT, NUM_NESTS, HexagonMesh};
 use bevy::{log, prelude::*, sprite::MaterialMesh2dBundle};
 
 use super::{ant::Ant, pheromones, PheromoneParams};
@@ -319,7 +319,7 @@ pub fn leave_pheromone_trails(
     >,
     colors: Res<Colors>,
     pher_params: Res<PheromoneParams>,
-    mut meshes: ResMut<Assets<Mesh>>,
+    hex_mesh: Res<HexagonMesh>,
 ) {
     let (manager_id, pheromone_manager) = pheromone_manager
         .get_single()
@@ -367,7 +367,8 @@ pub fn leave_pheromone_trails(
                         let scaled_loc = pheromone_loc * PHEROMONE_GRANULARITY;
                         builder.spawn((
                             MaterialMesh2dBundle {
-                                mesh: meshes.add(shape::Circle::default().into()).into(),
+                                // mesh: meshes.add(shape::Circle::default().into()).into(),
+                                mesh: hex_mesh.clone_weak().into(),
                                 //FIXME: no color here
                                 material: color_handle.clone_weak(),
                                 transform: Transform::from_xyz(scaled_loc.x, scaled_loc.y, BOARD_HEIGHT as f32)

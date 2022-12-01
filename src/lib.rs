@@ -164,3 +164,14 @@ pub enum GameMode {
     AntNetwork,
     AntWander,
 }
+
+#[derive(Debug,Clone,Resource, Deref, DerefMut)]
+pub struct HexagonMesh(Handle<Mesh>);
+
+impl FromWorld for HexagonMesh {
+    fn from_world(world: &mut World) -> Self {
+        let mut meshes: &mut Mut<Assets<Mesh>> = &mut world.resource_mut();
+        let hexagon = meshes.add(shape::Circle::default().into()).into();
+        return Self(hexagon);
+    }
+}

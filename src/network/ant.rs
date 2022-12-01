@@ -122,7 +122,7 @@ impl AntBundle {
         // );
         return Self {
             sprite_sheet: SpriteSheetBundle {
-                texture_atlas: ant_texture.clone(),
+                texture_atlas: ant_texture.clone_weak(),
                 transform: transform.with_scale(ANT_SCALE).with_rotation(q),
                 ..default()
             },
