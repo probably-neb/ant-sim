@@ -249,22 +249,22 @@ pub const SYSTEM_PHEROMONE_FADE_SPEED: f32 = 0.03;
 pub const SYSTEM_PHEROMONE_GROW_SPEED: f32 = 0.1;
 
 pub fn move_ant(
-    mut commands: Commands,
-    mut ants: Query<(&mut Transform, &mut Ant, &mut AntPheromoneTimer)>,
-    pheromone_manager: Query<&PheromoneManager>,
-    mut pheromones: Query<&mut Pheromone>,
+    mut ants: Query<(&mut Transform, &mut Ant)>,
     time: Res<Time>,
     mut nests: Query<(Entity, &mut Nest)>,
     nest_ids: Res<NestColors>,
     decision_weights: Res<DecisionWeights>,
+    windows: Res<Windows>,
 ) {
     let mut rng = thread_rng();
-    let pheromone_manager = pheromone_manager
-        .get_single()
-        .expect("there should be pheromones");
-    let bounds = pheromone_manager.win;
+    // let pheromone_manager = pheromone_manager
+    //     .get_single()
+    //     .expect("there should be pheromones");
+    // let bounds = pheromone_manager.win;
+    let win = windows.primary();
+    let bounds = Vec2 {x: win.width(), y: win.height()};
 
-    for (mut transform, mut ant, mut pheromone_timer) in &mut ants {
+    for (mut transform, mut ant) in &mut ants {
         let ant_loc = transform.translation.truncate();
         let bounds_situation = Bounds::check(transform.translation, bounds / 2.0);
 
@@ -347,20 +347,6 @@ pub fn move_ant(
             // leave memory of where we were going and where we came from
             nest_component.step_pheromone(ant.parent_color);
             ant.leave_nest();
-        }
-        let pheromone_tile = pheromone_manager.id_of_pheromone_at(ant_loc, bounds.x, bounds.y);
-        let mut pheromone = pheromones
-            .get_mut(pheromone_tile)
-            .expect("pheromone manager shouldn't have bastards");
-
-        // to find our way home
-        pheromone.add_trail(ant.parent_color);
-
-        pheromone_timer.tick(time.delta());
-        if pheromone_timer.just_finished() {
-            commands
-                .entity(pheromone_tile)
-                .insert(pheromones::NonEmptyTrail);
         }
 
         let delta_time = f32::min(0.2, time.delta_seconds());

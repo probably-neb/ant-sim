@@ -1,10 +1,12 @@
 use std::{
-    f32::consts::{FRAC_PI_4, FRAC_PI_8, TAU},
+    f32::consts::{FRAC_PI_8, TAU},
     ops::{Index, IndexMut},
 };
 
 use crate::{Colors, BOARD_HEIGHT, NUM_NESTS};
 use bevy::{log, prelude::*, sprite::MaterialMesh2dBundle};
+
+use super::{ant::Ant, pheromones};
 
 const PHEROMONE_STEP: f32 = 0.10;
 const PHEROMONE_GRANULARITY: f32 = 4.0;
@@ -128,21 +130,21 @@ impl PheromoneManager {
     }
 
     pub fn ids_of_adjacent_pheromones(&self, angle: f32, ant_loc: Vec2) -> Vec<(Entity, Vec2)> {
-        let ul = Vec2 { x: -1.0, y: 1.0 };
-        let uu = Vec2 { x: 0.0, y: 1.0 };
-        let ur = Vec2 { x: 1.0, y: 1.0 };
-        let rr = Vec2 { x: 1.0, y: 0.0 };
-        let dr = Vec2 { x: 1.0, y: -1.0 };
-        let dd = Vec2 { x: 0.0, y: -1.0 };
-        let dl = Vec2 { x: -1.0, y: -1.0 };
-        let ll = Vec2 { x: -1.0, y: 0.0 };
+        // let ul = Vec2 { x: -1.0, y: 1.0 };
+        // let uu = Vec2 { x: 0.0, y: 1.0 };
+        // let ur = Vec2 { x: 1.0, y: 1.0 };
+        // let rr = Vec2 { x: 1.0, y: 0.0 };
+        // let dr = Vec2 { x: 1.0, y: -1.0 };
+        // let dd = Vec2 { x: 0.0, y: -1.0 };
+        // let dl = Vec2 { x: -1.0, y: -1.0 };
+        // let ll = Vec2 { x: -1.0, y: 0.0 };
         let current_tile = Self::get_grid_loc(ant_loc, self.win.x, self.win.y);
         // let mut locs: [Option<Vec2>; 3] = [Some(current_tile); 3];
 
-        let NE = FRAC_PI_4;
-        let NW = 3. * FRAC_PI_4;
-        let SW = 5. * FRAC_PI_4;
-        let SE = 7. * FRAC_PI_4;
+        // let NE = FRAC_PI_4;
+        // let NW = 3. * FRAC_PI_4;
+        // let SW = 5. * FRAC_PI_4;
+        // let SE = 7. * FRAC_PI_4;
 
         // for checking if locs are in bounds
         fn within_bounds(target: f32, min: f32, max: f32) -> bool {
@@ -205,59 +207,6 @@ impl PheromoneManager {
                 };
             }
         }
-
-        // // NORTH
-        // if contained(angle, NE, NW) {
-        //     for (i, v) in [ul, uu, ur].iter().enumerate() {
-        //         let grid_loc = locs[i].unwrap() + *v;
-        //         if within_bounds(grid_loc.x, 0.0, self.grid_dims.x)
-        //             && within_bounds(grid_loc.y, 0.0, self.grid_dims.y)
-        //         {
-        //             locs[i] = Some(grid_loc);
-        //         } else {
-        //             locs[i] = None;
-        //         }
-        //     }
-        // }
-        // // EAST
-        // if contained(angle, 0.0, NE) || contained(angle, SE, TAU) {
-        //     for (i, v) in [ur, rr, dr].iter().enumerate() {
-        //         let grid_loc = locs[i].unwrap() + *v;
-        //         if within_bounds(grid_loc.x, 0.0, self.grid_dims.x)
-        //             && within_bounds(grid_loc.y, 0.0, self.grid_dims.y)
-        //         {
-        //             locs[i] = Some(grid_loc);
-        //         } else {
-        //             locs[i] = None;
-        //         }
-        //     }
-        // }
-        // // SOUTH
-        // if contained(angle, SW, SE) {
-        //     for (i, v) in [dl, dd, dr].iter().enumerate() {
-        //         let grid_loc = locs[i].unwrap() + *v;
-        //         if within_bounds(grid_loc.x, 0.0, self.grid_dims.x)
-        //             && within_bounds(grid_loc.y, 0.0, self.grid_dims.y)
-        //         {
-        //             locs[i] = Some(grid_loc);
-        //         } else {
-        //             locs[i] = None;
-        //         }
-        //     }
-        // }
-        // // WEST
-        // if contained(angle, NW, SW) {
-        //     for (i, v) in [dl, ll, ul].iter().enumerate() {
-        //         let grid_loc = locs[i].unwrap() + *v;
-        //         if within_bounds(grid_loc.x, 0.0, self.grid_dims.x)
-        //             && within_bounds(grid_loc.y, 0.0, self.grid_dims.y)
-        //         {
-        //             locs[i] = Some(grid_loc);
-        //         } else {
-        //             locs[i] = None;
-        //         }
-        //     }
-        // }
 
         let mut ids: Vec<(Entity, Vec2)> = Vec::with_capacity(3);
         for tile_loc in locs.iter() {
@@ -359,17 +308,41 @@ pub fn fade_pheromones(
     }
 }
 
-pub fn color_pheromones(
+pub fn leave_pheromone_trails(
+    mut commands: Commands,
+    ants: Query<(&Ant, &Transform)>,
+    pheromone_manager: Query<&PheromoneManager>,
     mut pheromones: Query<
         (
-            &Pheromone,
+            Entity,
+            &mut Pheromone,
             &mut Handle<ColorMaterial>,
         ),
-        With<NonEmptyTrail>,
     >,
     colors: Res<Colors>,
 ) {
-    for (pheromone, mut color_handle) in &mut pheromones {
+    let pheromone_manager = pheromone_manager
+        .get_single()
+        .expect("there should be pheromones");
+    let bounds = pheromone_manager.win;
+    for (ant, transform) in &ants {
+        let ant_loc = transform.translation.truncate();
+
+        let pheromone_tile = pheromone_manager.id_of_pheromone_at(ant_loc, bounds.x, bounds.y);
+        let (_, mut pheromone, mut color_handle) = pheromones
+            .get_mut(pheromone_tile)
+            .expect("pheromone manager shouldn't have bastards");
+
+        // to find our way home
+        pheromone.add_trail(ant.parent_color);
+
+        // pheromone_timer.tick(time.delta());
+        // if pheromone_timer.just_finished() {
+            commands
+                .entity(pheromone_tile)
+                .insert(pheromones::NonEmptyTrail);
+        // }
+
         // color trail
         let color_id = pheromone.most_prominent();
         let cur_color_handle: &Handle<ColorMaterial> = &colors.color_handles[color_id];

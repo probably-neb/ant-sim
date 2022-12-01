@@ -59,7 +59,7 @@ impl Plugin for AntNetworkPlugin {
             )
         .add_fixed_timestep_system(
             "color timestep", 0,
-            pheromones::color_pheromones
+            pheromones::leave_pheromone_trails
             .run_in_state(GameState::Play)
             .run_in_state(GameMode::AntNetwork)
         )
