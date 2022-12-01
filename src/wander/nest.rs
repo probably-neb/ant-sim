@@ -1,5 +1,6 @@
-use crate::{
-    ant, food::Food, Colors, NumAnts, BORDER_PADDING, FOOD_HEIGHT, FOOD_SIZE_V3, MAX_ANTS,
+use super::{
+    ant, food::Food, };
+use crate::{Colors, NumAnts, BORDER_PADDING, FOOD_HEIGHT, FOOD_SIZE_V3, MAX_ANTS,
     NEST_FOOD_REQUEST_PROB, NEST_HEIGHT, NEST_SIZE, NUM_NESTS,
 };
 use bevy::{
@@ -170,85 +171,7 @@ fn pos_size(t: Transform) -> (Vec3, Vec2) {
     return (pos, size);
 }
 
-pub fn fade_nest_network_pheremones(mut nests: Query<&mut Nest>) {
-    for mut nest in &mut nests {
-        nest.fade();
-    }
-}
-
 const FOOD_OFFSET: Vec3 = Vec3 {x: 0., y: 80., z: FOOD_HEIGHT as f32};
-
-pub fn ant_nest_network_interactions(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    colors: Res<Colors>,
-    mut ants: Query<(Entity, &mut ant::Ant, &Transform)>,
-    mut nests: Query<(&Nest, &Transform)>,
-) {
-    for (nest, nest_transform) in &mut nests {
-        for (ant_id, mut ant, ant_transform) in &mut ants {
-            let (nest_pos, nest_size) = pos_size(*nest_transform);
-            let (ant_pos, ant_size) = pos_size(*ant_transform);
-
-            // skip ants we already updated
-            if nest.color == ant.prev_nest() {
-                continue;
-            }
-            let collision = collide(nest_pos, nest_size * 2., ant_pos, ant_size);
-            match collision {
-                Some(_) => {
-                    if ant.target_color == nest.color {
-                        if !ant.carrying_food {
-                            // commands.entity(ant_id).add_child(food_id);
-                            commands.entity(ant_id).with_children(|builder| {
-                                builder.spawn((
-                                    MaterialMesh2dBundle {
-                                        mesh: meshes.add(shape::Circle::default().into()).into(),
-                                        material: colors.color_handles[nest.color].clone(),
-                                        transform: Transform::from_translation(FOOD_OFFSET)
-                                        .with_scale(FOOD_SIZE_V3),
-                                        visibility: Visibility { is_visible: true },
-                                        ..default()
-                                    },
-                                    Food::new(nest.color),
-                                ));
-                            });
-                            ant.target_color = ant.parent_color;
-                            // not parent but this will cause to and from pheromone trails
-                            // to be set on the way to target and on the way back
-                            ant.parent_color = nest.color;
-                            ant.carrying_food = true;
-                            log::info!(
-                                "Ant reached target nest {} returning to parent with food",
-                                nest.color,
-                            );
-                        } else {
-                            commands.entity(ant_id).despawn_descendants();
-                            ant.target_color = ant.parent_color;
-                            ant.parent_color = nest.color;
-                            ant.carrying_food = false;
-                            log::info!("Ant reached parent nest {} dropping off food", nest.color,);
-                        }
-                        // let orientation = ant.orientation + PI;
-                        // ant.set_orientation(orientation);
-                        // ant.set_target_orientation(orientation);
-                        // ant.turn_around = true;
-                    } else {
-                        log::info!(
-                            "ant heading to {} taking pit stop at {}",
-                            ant.target_color,
-                            nest.color
-                        );
-                        // figure out jump point
-                        //
-                        ant.visit_nest(nest.color);
-                    }
-                }
-                None => continue,
-            }
-        }
-    }
-}
 
 pub fn ant_nest_interactions(
     mut commands: Commands,

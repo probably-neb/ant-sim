@@ -1,5 +1,5 @@
 use std::{
-    f32::consts::{FRAC_PI_4, FRAC_PI_8, PI, TAU},
+    f32::consts::{FRAC_PI_8, TAU},
     ops::{Index, IndexMut},
 };
 
@@ -128,21 +128,21 @@ impl PheromoneManager {
     }
 
     pub fn ids_of_adjacent_pheromones(&self, angle: f32, ant_loc: Vec2) -> Vec<(Entity, Vec2)> {
-        let ul = Vec2 { x: -1.0, y: 1.0 };
-        let uu = Vec2 { x: 0.0, y: 1.0 };
-        let ur = Vec2 { x: 1.0, y: 1.0 };
-        let rr = Vec2 { x: 1.0, y: 0.0 };
-        let dr = Vec2 { x: 1.0, y: -1.0 };
-        let dd = Vec2 { x: 0.0, y: -1.0 };
-        let dl = Vec2 { x: -1.0, y: -1.0 };
-        let ll = Vec2 { x: -1.0, y: 0.0 };
+        // let ul = Vec2 { x: -1.0, y: 1.0 };
+        // let uu = Vec2 { x: 0.0, y: 1.0 };
+        // let ur = Vec2 { x: 1.0, y: 1.0 };
+        // let rr = Vec2 { x: 1.0, y: 0.0 };
+        // let dr = Vec2 { x: 1.0, y: -1.0 };
+        // let dd = Vec2 { x: 0.0, y: -1.0 };
+        // let dl = Vec2 { x: -1.0, y: -1.0 };
+        // let ll = Vec2 { x: -1.0, y: 0.0 };
         let current_tile = Self::get_grid_loc(ant_loc, self.win.x, self.win.y);
         // let mut locs: [Option<Vec2>; 3] = [Some(current_tile); 3];
 
-        let NE = FRAC_PI_4;
-        let NW = 3. * FRAC_PI_4;
-        let SW = 5. * FRAC_PI_4;
-        let SE = 7. * FRAC_PI_4;
+        // let NE = FRAC_PI_4;
+        // let NW = 3. * FRAC_PI_4;
+        // let SW = 5. * FRAC_PI_4;
+        // let SE = 7. * FRAC_PI_4;
 
         // for checking if locs are in bounds
         fn within_bounds(target: f32, min: f32, max: f32) -> bool {
@@ -349,7 +349,6 @@ pub fn color_and_fade_pheromones(
     >,
     colors: Res<Colors>,
 ) {
-    log::warn!("Pheromones were faded");
     for (id, mut pheromone, mut visibility, mut color_handle) in &mut pheromones {
         // color trail
         let color_id = pheromone.most_prominent();
