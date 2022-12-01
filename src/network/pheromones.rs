@@ -60,7 +60,7 @@ fn contained(target: f32, min: f32, max: f32) -> bool {
 pub struct PheromoneManager {
     //TODO: add field for window dims instead of passing them around constantly
     grid_dims: Vec2,
-    child_ids: Vec<Entity>,
+    child_ids: Vec<Option<Entity>>,
     pub win: Vec2,
 }
 
@@ -77,12 +77,12 @@ impl PheromoneManager {
     pub fn new(w_width: f32, w_height: f32) -> Self {
         let grid_dims = Self::get_grid_dims_from_window_size(w_width, w_height);
         let grid_size = (grid_dims.x * grid_dims.y) as usize;
-        let mut child_ids = Vec::with_capacity(grid_size);
-        for i in 0..grid_size {
-            // temp value
-            let e = Entity::from_raw(i as u32);
-            child_ids.push(e);
-        }
+        let mut child_ids = vec![None; grid_size];
+        // for i in 0..grid_size {
+        //     // temp value
+        //     let e = Entity::from_raw(i as u32);
+        //     child_ids.push(e);
+        // }
         let win = Vec2 {
             x: w_width,
             y: w_height,
@@ -95,7 +95,7 @@ impl PheromoneManager {
     }
 
     /// returns the pheromone grid coordinates of the cell containing loc
-    fn get_grid_loc(loc: Vec2, window_width: f32, window_height: f32) -> Vec2 {
+    pub fn get_grid_loc(loc: Vec2, window_width: f32, window_height: f32) -> Vec2 {
         let rel_x = loc.x + 0.5 * window_width;
         let rel_y = loc.y + 0.5 * window_height;
         let x = rel_x / PHEROMONE_GRANULARITY; //.floor();
@@ -109,7 +109,7 @@ impl PheromoneManager {
         ant_loc: Vec2,
         window_width: f32,
         window_height: f32,
-    ) -> Entity {
+    ) -> Option<Entity> {
         let grid_loc = Self::get_grid_loc(ant_loc, window_width, window_height);
         let id = self[grid_loc];
         // println!(
@@ -127,7 +127,7 @@ impl PheromoneManager {
         return self.grid_dims.x * index.y.floor() + index.x.floor();
     }
 
-    pub fn ids_of_adjacent_pheromones(&self, angle: f32, ant_loc: Vec2) -> Vec<(Entity, Vec2)> {
+    pub fn ids_of_adjacent_pheromones(&self, angle: f32, ant_loc: Vec2) -> Vec<(Option<Entity>, Vec2)> {
         // let ul = Vec2 { x: -1.0, y: 1.0 };
         // let uu = Vec2 { x: 0.0, y: 1.0 };
         // let ur = Vec2 { x: 1.0, y: 1.0 };
@@ -206,7 +206,7 @@ impl PheromoneManager {
             }
         }
 
-        let mut ids: Vec<(Entity, Vec2)> = Vec::with_capacity(3);
+        let mut ids: Vec<(Option<Entity>, Vec2)> = Vec::with_capacity(3);
         for tile_loc in locs.iter() {
             let world_loc = ant_loc + (PHEROMONE_GRANULARITY * (current_tile - *tile_loc));
             ids.push((
@@ -219,7 +219,7 @@ impl PheromoneManager {
 }
 
 impl Index<Vec2> for PheromoneManager {
-    type Output = Entity;
+    type Output = Option<Entity>;
     fn index(&self, index: Vec2) -> &Self::Output {
         let idx = self.index_grid(index);
         // println!(
@@ -242,7 +242,6 @@ impl IndexMut<Vec2> for PheromoneManager {
 pub fn create_pheromone_manager(
     mut commands: Commands,
     windows: Res<Windows>,
-    mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     let window = windows.primary();
@@ -253,32 +252,32 @@ pub fn create_pheromone_manager(
         ..default()
     },));
     let default_handle = materials.add(ColorMaterial::default());
-    entity_commands.with_children(|builder| {
-        for x in (0..manager.grid_dims.x as u32).rev() {
-            for y in (0..manager.grid_dims.y as u32).rev() {
-                let x = x as f32;
-                let y = y as f32;
-                let dim_x = x * PHEROMONE_GRANULARITY;
-                let dim_y = y * PHEROMONE_GRANULARITY;
-                let id = builder
-                    .spawn((
-                        MaterialMesh2dBundle {
-                            // mesh: meshes.add(shape::Circle::default().into()).into(),
-                            mesh: meshes.add((shape::RegularPolygon{sides: 6, ..default()}).into()).into(),
-                            //FIXME: no color here
-                            material: default_handle.clone(),
-                            transform: Transform::from_xyz(dim_x, dim_y, BOARD_HEIGHT as f32)
-                                .with_scale(Vec3::splat(PHEROMONE_GRANULARITY)),
-                            visibility: Visibility { is_visible: false },
-                            ..default()
-                        },
-                        Pheromone::new(5, Vec2 { x, y }),
-                    ))
-                    .id();
-                manager[Vec2 { x, y }] = id;
-            }
-        }
-    });
+    //entity_commands.with_children(|builder| {
+    //    for x in (0..manager.grid_dims.x as u32).rev() {
+    //        for y in (0..manager.grid_dims.y as u32).rev() {
+    //            let x = x as f32;
+    //            let y = y as f32;
+    //            let dim_x = x * PHEROMONE_GRANULARITY;
+    //            let dim_y = y * PHEROMONE_GRANULARITY;
+    //            let id = builder
+    //                .spawn((
+    //                    MaterialMesh2dBundle {
+    //                        // mesh: meshes.add(shape::Circle::default().into()).into(),
+    //                        mesh: meshes.add((shape::RegularPolygon{sides: 6, ..default()}).into()).into(),
+    //                        //FIXME: no color here
+    //                        material: default_handle.clone(),
+    //                        transform: Transform::from_xyz(dim_x, dim_y, BOARD_HEIGHT as f32)
+    //                            .with_scale(Vec3::splat(PHEROMONE_GRANULARITY)),
+    //                        visibility: Visibility { is_visible: false },
+    //                        ..default()
+    //                    },
+    //                    Pheromone::new(5, Vec2 { x, y }),
+    //                ))
+    //                .id();
+    //            manager[Vec2 { x, y }] = id;
+    //        }
+    //    }
+    //});
     // manager.child_ids.reverse();
     entity_commands.insert(manager);
 }
@@ -310,7 +309,7 @@ pub fn fade_pheromones(
 pub fn leave_pheromone_trails(
     mut commands: Commands,
     ants: Query<(&Ant, &Transform)>,
-    pheromone_manager: Query<&PheromoneManager>,
+    pheromone_manager: Query<(Entity, &PheromoneManager)>,
     mut pheromones: Query<
         (
             Entity,
@@ -320,34 +319,68 @@ pub fn leave_pheromone_trails(
     >,
     colors: Res<Colors>,
     pher_params: Res<PheromoneParams>,
+    mut meshes: ResMut<Assets<Mesh>>,
 ) {
-    let pheromone_manager = pheromone_manager
+    let (manager_id, pheromone_manager) = pheromone_manager
         .get_single()
         .expect("there should be pheromones");
     let bounds = pheromone_manager.win;
     for (ant, transform) in &ants {
         let ant_loc = transform.translation.truncate();
 
-        let pheromone_tile = pheromone_manager.id_of_pheromone_at(ant_loc, bounds.x, bounds.y);
-        let (_, mut pheromone, mut color_handle) = pheromones
-            .get_mut(pheromone_tile)
-            .expect("pheromone manager shouldn't have bastards");
+        let pheromone_loc = PheromoneManager::get_grid_loc(ant_loc, bounds.x, bounds.y);
+        let opt_pheromone_tile = pheromone_manager[pheromone_loc];
 
-        // to find our way home
-        pheromone.add_trail(ant.parent_color, pher_params.trail_step);
+        let trail_color = ant.parent_color;
 
-        // pheromone_timer.tick(time.delta());
-        // if pheromone_timer.just_finished() {
-            commands
-                .entity(pheromone_tile)
-                .insert(pheromones::NonEmptyTrail);
-        // }
+        match opt_pheromone_tile {
+            Some(pheromone_tile) => {
+                let (_, mut pheromone, mut color_handle) = pheromones
+                    .get_mut(pheromone_tile)
+                    .expect("pheromone manager shouldn't have bastards");
 
-        // color trail
-        let color_id = pheromone.most_prominent();
-        let cur_color_handle: &Handle<ColorMaterial> = &colors.color_handles[color_id];
-        if cur_color_handle.id() != color_handle.id() {
-            *color_handle = Handle::weak(cur_color_handle.id());
+                // to find our way home
+                pheromone.add_trail(trail_color, pher_params.trail_step);
+
+                // pheromone_timer.tick(time.delta());
+                // if pheromone_timer.just_finished() {
+                    commands
+                        .entity(pheromone_tile)
+                        .insert(pheromones::NonEmptyTrail);
+                // }
+
+                // color trail
+                let color_id = pheromone.most_prominent();
+                let cur_color_handle: &Handle<ColorMaterial> = &colors.color_handles[color_id];
+                if cur_color_handle.id() != color_handle.id() {
+                    *color_handle = Handle::weak(cur_color_handle.id());
+                }
+            },
+            None => {
+                let mut pheromone = Pheromone::new(colors.colors.len(), pheromone_loc);
+                let color_handle = &colors.color_handles[trail_color];
+
+                pheromone.add_trail(trail_color,pher_params.trail_step);
+
+                commands.entity(manager_id).with_children(
+                    |builder| { 
+                        let scaled_loc = pheromone_loc * PHEROMONE_GRANULARITY;
+                        builder.spawn((
+                            MaterialMesh2dBundle {
+                                mesh: meshes.add(shape::Circle::default().into()).into(),
+                                //FIXME: no color here
+                                material: color_handle.clone_weak(),
+                                transform: Transform::from_xyz(scaled_loc.x, scaled_loc.y, BOARD_HEIGHT as f32)
+                                    .with_scale(Vec3::splat(PHEROMONE_GRANULARITY)),
+                                    ..default()
+                            },
+                            pheromone,
+                            pheromones::NonEmptyTrail,
+                            ));
+                    }
+
+                 );
+            },
         }
 
         // make transparent based on weight
@@ -363,33 +396,33 @@ pub fn leave_pheromone_trails(
     }
 }
 
-pub fn print_angle(
-    mut pheromones: Query<(
-        Entity,
-        &Pheromone,
-        &mut Visibility,
-        &mut Handle<ColorMaterial>,
-    )>,
-    manager: Query<&PheromoneManager>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-) {
-    let manager = manager.get_single().unwrap();
-    let max_loc = manager.grid_dims;
-    let m = max_loc.y / max_loc.x;
-    for x in 0..max_loc.x as usize {
-        let x = x as f32;
-        let y = m * x;
-        let loc = Vec2 { x, y };
-        let id = manager[loc];
-        let mut tup = pheromones.get_mut(id).unwrap();
-        tup.2.is_visible = true;
-        materials.get_mut(&tup.3).unwrap().color = Color::RED;
-    }
-    let mid = pheromones
-        .get_mut(manager.id_of_pheromone_at(Vec2::splat(0.), 736., 955.5))
-        .unwrap();
-    materials.get_mut(&mid.3).unwrap().color = Color::AQUAMARINE;
-}
+// pub fn print_angle(
+//     mut pheromones: Query<(
+//         Entity,
+//         &Pheromone,
+//         &mut Visibility,
+//         &mut Handle<ColorMaterial>,
+//     )>,
+//     manager: Query<&PheromoneManager>,
+//     mut materials: ResMut<Assets<ColorMaterial>>,
+// ) {
+//     let manager = manager.get_single().unwrap();
+//     let max_loc = manager.grid_dims;
+//     let m = max_loc.y / max_loc.x;
+//     for x in 0..max_loc.x as usize {
+//         let x = x as f32;
+//         let y = m * x;
+//         let loc = Vec2 { x, y };
+//         let id = manager[loc];
+//         let mut tup = pheromones.get_mut(id).unwrap();
+//         tup.2.is_visible = true;
+//         materials.get_mut(&tup.3).unwrap().color = Color::RED;
+//     }
+//     let mid = pheromones
+//         .get_mut(manager.id_of_pheromone_at(Vec2::splat(0.), 736., 955.5))
+//         .unwrap();
+//     materials.get_mut(&mid.3).unwrap().color = Color::AQUAMARINE;
+// }
 
 #[cfg(test)]
 mod tests {

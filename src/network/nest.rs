@@ -141,7 +141,7 @@ pub fn spawn_nests(
         .map(|&v| -(bounds / 2.) + (v * NEST_SPREAD))
         .collect();
     coords.as_mut_slice().shuffle(&mut rng);
-    println!("coords: {:?}", &coords);
+    // println!("coords: {:?}", &coords);
     // let color = Color::rgba(0., 0., 0., 0.);
     // FIXME:
     for (color, color_id) in colors.iter() {
