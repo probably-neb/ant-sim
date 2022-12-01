@@ -7,9 +7,7 @@ use crate::{
     ANT_ANIMATION_SPEED, ANT_SCALE, ANT_SPEED, BORDER_PADDING, NUM_NESTS,
 };
 
-use super::{nest::{Nest, NestColors},
-    pheromones::{self, Pheromone, PheromoneManager}, DecisionWeights,
-};
+use super::{nest::{Nest, NestColors}, DecisionWeights, PheromoneParams, };
 
 use bevy::{ecs::component::Component, log, prelude::*};
 use rand::{distributions::WeightedIndex, prelude::*, thread_rng, Rng};
@@ -163,15 +161,10 @@ pub fn animate_ant(
 // contains bound checking logic
 #[derive(PartialEq, Eq)]
 enum Bounds {
-    LEFT,
-    RIGHT,
-    UP,
-    DOWN,
-}
-
-struct Recommendation {
-    where_to_point_now: f32,
-    where_to_try_and_point: f32,
+    Left,
+    Right,
+    Up,
+    Down,
 }
 
 // one could argue this is overly verbose and to that I say "and?"
@@ -183,73 +176,20 @@ impl Bounds {
         let mut collision: Option<Bounds> = None;
         if diff.x < BORDER_PADDING {
             if pos.x < 0.0 {
-                collision = Some(Self::LEFT);
+                collision = Some(Self::Left);
             } else {
-                collision = Some(Self::RIGHT);
+                collision = Some(Self::Right);
             }
         } else if diff.y < BORDER_PADDING {
             if pos.y < 0.0 {
-                collision = Some(Self::UP);
+                collision = Some(Self::Up);
             } else {
-                collision = Some(Self::DOWN);
+                collision = Some(Self::Down);
             }
         }
         return collision;
     }
-    fn rad(self) -> f32 {
-        match self {
-            Self::LEFT => PI,
-            Self::RIGHT => 0.0,
-            Self::UP => PI / 2.0,
-            Self::DOWN => (3.0 * PI) / 2.0,
-        }
-    }
-
-    fn where_should_i_go_instead(self, ant_orientation: f32) -> Recommendation {
-        // recommends pointing clockwise with target orientation away from the wall
-        // only recommends an immediate change in orientation (as opposed to a target orientation)
-        // if the ant is pointing towards the wall
-        // FIXME: LEFT match arm has incorrect min/max
-        // FIXME: bc bin panics every time LEFT is matched we know the bounds we're checking are
-        // way off
-        match self {
-            Self::LEFT => Recommendation {
-                // where_to_point_now: {
-                //     if ant_orientation > 3.0*PI/2.0 {
-                //         // ant_orientation.clamp(3.0*PI/2.0, TAU)
-                //         ant_orientation + PI / 2.
-                //     } else {
-                //         // ant_orientation.clamp(0.0, PI/2.0)
-                //         ant_orientation + PI / 2.
-                //     }
-                // },
-                where_to_point_now: 0.0,
-                where_to_try_and_point: 0.0,
-            },
-            Self::DOWN => Recommendation {
-                // point down now
-                where_to_point_now: //ant_orientation.clamp(PI,TAU),
-                        3.0*PI / 2.,
-                where_to_try_and_point: 3.0*PI/2.0,
-            },
-            Self::RIGHT => Recommendation {
-                // point left now
-                where_to_point_now: //ant_orientation.clamp(PI/2.0, 3.0*PI/2.0),
-                        PI,
-                where_to_try_and_point: PI,
-            },
-            Self::UP => Recommendation {
-                // point up now
-                where_to_point_now: //ant_orientation.clamp(0.0, PI),
-                        PI / 2.,
-                where_to_try_and_point: PI/2.0,
-            },
-        }
-    }
 }
-
-pub const SYSTEM_PHEROMONE_FADE_SPEED: f32 = 0.03;
-pub const SYSTEM_PHEROMONE_GROW_SPEED: f32 = 0.1;
 
 pub fn move_ant(
     mut ants: Query<(&mut Transform, &mut Ant)>,
@@ -258,12 +198,10 @@ pub fn move_ant(
     nest_ids: Res<NestColors>,
     decision_weights: Res<DecisionWeights>,
     windows: Res<Windows>,
+    pher_params: Res<PheromoneParams>,
 ) {
     let mut rng = thread_rng();
-    // let pheromone_manager = pheromone_manager
-    //     .get_single()
-    //     .expect("there should be pheromones");
-    // let bounds = pheromone_manager.win;
+
     let win = windows.primary();
     let bounds = Vec2 {x: win.width(), y: win.height()};
 
@@ -334,21 +272,16 @@ pub fn move_ant(
             let curr_trajectory = Vec2::from_angle(ant.orientation);
             let new_trajectory = next_nest_loc - ant_loc;
             let delta = curr_trajectory.angle_between(new_trajectory);
-            // if delta.is_nan() {
-            //     dbg!(curr_trajectory.normalize());
-            //     dbg!(new_trajectory.normalize());
-            //     delta = 0.0;
-            // }
-            // log::info!("ant with target {} stopped at {} now going to {} (delta {} chance: {}%)",  ant.target_color,current_nest_color, next_nest.color, delta.to_degrees(), weights[next_nest_color]*100.);
 
-            let new_orientation = ant.orientation + delta;
-            transform.rotate_z(delta);
-            ant.set_orientation(new_orientation);
-            ant.set_target_orientation(new_orientation);
+            // let new_orientation = ant.orientation + delta;
+            ant.rotate_hard(&mut transform, delta);
+            // transform.rotate_z(delta);
+            // ant.set_orientation(new_orientation);
+            // ant.set_target_orientation(new_orientation);
 
             let mut nest_component = nests.get_mut(cur_id.unwrap()).unwrap().1;
             // leave memory of where we were going and where we came from
-            nest_component.step_pheromone(ant.parent_color);
+            nest_component.step_pheromone(ant.parent_color, pher_params.nest_step);
             ant.leave_nest();
         }
 

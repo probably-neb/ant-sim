@@ -6,11 +6,9 @@ use std::{
 use crate::{Colors, BOARD_HEIGHT, NUM_NESTS};
 use bevy::{log, prelude::*, sprite::MaterialMesh2dBundle};
 
-use super::{ant::Ant, pheromones};
+use super::{ant::Ant, pheromones, PheromoneParams};
 
-const PHEROMONE_STEP: f32 = 0.10;
 const PHEROMONE_GRANULARITY: f32 = 4.0;
-const PHEROMONE_FADE_RATE: f32 = 0.001;
 // const PHEROMONE_FADE_PERCENTAGE: f32 = 1.0 - PHEROMONE_FADE_RATE;
 
 #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
@@ -29,8 +27,8 @@ impl Pheromone {
         let weights = vec![0.; NUM_NESTS];
         return Self { weights, loc };
     }
-    pub fn add_trail(&mut self, color: usize) {
-        self.weights[color] += PHEROMONE_STEP;
+    pub fn add_trail(&mut self, color: usize, step: f32) {
+        self.weights[color] += step;
     }
 
     pub fn is_empty(&self) -> bool {
@@ -46,9 +44,9 @@ impl Pheromone {
             .expect("pheromone weights shouldn't be empty")
             .0;
     }
-    pub fn fade(&mut self) {
+    pub fn fade(&mut self, rate: f32) {
         for w in &mut self.weights {
-            *w = (*w - PHEROMONE_FADE_RATE).max(0.0);
+            *w = (*w - rate).max(0.0);
         }
     }
 }
@@ -295,9 +293,10 @@ pub fn fade_pheromones(
         ),
         With<NonEmptyTrail>,
     >,
+    params: Res<PheromoneParams>,
 ) {
     for (id, mut pheromone, mut visibility) in &mut pheromones {
-        pheromone.fade();
+        pheromone.fade(params.trail_fade_rate);
         visibility.is_visible = !pheromone.is_empty();
         if !visibility.is_visible {
             // will prevent this pheromone from being looped over until another ant steps on it
@@ -320,6 +319,7 @@ pub fn leave_pheromone_trails(
         ),
     >,
     colors: Res<Colors>,
+    pher_params: Res<PheromoneParams>,
 ) {
     let pheromone_manager = pheromone_manager
         .get_single()
@@ -334,7 +334,7 @@ pub fn leave_pheromone_trails(
             .expect("pheromone manager shouldn't have bastards");
 
         // to find our way home
-        pheromone.add_trail(ant.parent_color);
+        pheromone.add_trail(ant.parent_color, pher_params.trail_step);
 
         // pheromone_timer.tick(time.delta());
         // if pheromone_timer.just_finished() {

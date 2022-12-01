@@ -15,7 +15,7 @@ use rand::{
     Rng,
 };
 
-use super::{ant, food::Food};
+use super::{ant, food::Food, PheromoneParams};
 
 #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Debug, Component, Clone)]
@@ -38,22 +38,22 @@ impl Nest {
         };
     }
     #[inline]
-    pub fn step_pheromone(&mut self, color: usize) {
+    pub fn step_pheromone(&mut self, color: usize, step: f32) {
         let mut weight = self.color_weights[color];
-        weight += ant::SYSTEM_PHEROMONE_GROW_SPEED;
+        weight += step;
         weight = weight.min(1.0);
         self.color_weights[color] = weight;
     }
     // TODO: pheromone component
     #[inline]
-    pub fn step_pheromones(&mut self, target_color: usize, parent_color: usize) {
-        self.step_pheromone(target_color);
-        self.step_pheromone(parent_color);
+    pub fn step_pheromones(&mut self, target_color: usize, parent_color: usize, step: f32) {
+        self.step_pheromone(target_color, step);
+        self.step_pheromone(parent_color, step);
     }
 
-    pub fn fade(&mut self) {
+    pub fn fade(&mut self, rate: f32) {
         for w in self.color_weights.iter_mut() {
-            *w -= ant::SYSTEM_PHEROMONE_FADE_SPEED;
+            *w -= rate;
             *w = w.max(0.0);
         }
     }
@@ -172,9 +172,9 @@ fn pos_size(t: Transform) -> (Vec3, Vec2) {
     return (pos, size);
 }
 
-pub fn fade_nest_network_pheremones(mut nests: Query<&mut Nest>) {
+pub fn fade_nest_network_pheremones(mut nests: Query<&mut Nest>, params: Res<PheromoneParams>) {
     for mut nest in &mut nests {
-        nest.fade();
+        nest.fade(params.nest_fade_rate);
     }
 }
 

@@ -20,6 +20,7 @@ impl Plugin for AntNetworkPlugin {
         .init_resource::<Colors>()
         .init_resource::<NumAnts>()
         .init_resource::<DecisionWeights>()
+        .init_resource::<PheromoneParams>()
         .add_startup_system(pheromones::create_pheromone_manager)
         .add_startup_system(nest::spawn_nests)
         .add_startup_system(ant::load_ant_texture)
@@ -78,6 +79,9 @@ impl Plugin for AntNetworkPlugin {
         #[cfg(feature = "debug")]
         app.add_plugin(InspectorPlugin::<DecisionWeights>::new());
 
+        #[cfg(feature = "debug")]
+        app.add_plugin(InspectorPlugin::<PheromoneParams>::new());
+
     }
 }
 
@@ -102,3 +106,30 @@ impl Default for DecisionWeights {
         }
     }
 }
+
+
+const TRAIL_PHEROMONE_STEP: f32 = 0.10;
+const TRAIL_PHEROMONE_FADE_RATE: f32 = 0.001;
+const NEST_PHEROMONE_FADE_SPEED: f32 = 0.03;
+const NEST_PHEROMONE_STEP: f32 = 0.1;
+
+#[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
+#[derive(Debug,Clone,Resource,)]
+pub struct PheromoneParams {
+    pub trail_step: f32,
+    pub nest_step: f32,
+    pub trail_fade_rate: f32,
+    pub nest_fade_rate: f32,
+}
+
+impl Default for PheromoneParams {
+    fn default() -> Self {
+        return Self {
+    trail_step: TRAIL_PHEROMONE_STEP,
+    nest_step: NEST_PHEROMONE_STEP,
+    trail_fade_rate: TRAIL_PHEROMONE_FADE_RATE,
+    nest_fade_rate: NEST_PHEROMONE_FADE_SPEED,
+        }
+    }
+}
+
