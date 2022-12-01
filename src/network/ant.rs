@@ -26,6 +26,7 @@ pub struct Ant {
     // pub has_target: bool,
     pub current_nest: Option<usize>,
     pub prev_nests: VecDeque<usize>,
+    pub steps: usize,
 }
 
 impl Ant {
@@ -44,6 +45,7 @@ impl Ant {
             target_orientation: angle,
             current_nest: Some(parent_color),
             prev_nests,
+            steps: 0,
         }
     }
 
@@ -76,6 +78,7 @@ impl Ant {
     pub fn leave_nest(&mut self) {
         self.prev_nests.truncate(NUM_NESTS);
         self.current_nest = None;
+        self.steps+=1;
     }
 
     pub fn prev_nest(&self) -> usize {

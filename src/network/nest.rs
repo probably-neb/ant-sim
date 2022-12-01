@@ -220,14 +220,16 @@ pub fn ant_nest_network_interactions(
                             // to be set on the way to target and on the way back
                             ant.parent_color = nest.color;
                             ant.carrying_food = true;
-                            log::info!("Ant reached target nest {} after {} steps", nest.color,ant.prev_nests.len());
+                            log::info!("Ant reached target nest {} after {} steps", nest.color,ant.steps);
+                            ant.steps = 0;
                         } else {
                             // despawn food
                             commands.entity(ant_id).despawn_descendants();
                             ant.target_color = ant.parent_color;
                             ant.parent_color = nest.color;
                             ant.carrying_food = false;
-                            log::info!("Ant reached parent nest {} after {} steps", nest.color,ant.prev_nests.len());
+                            log::info!("Ant reached parent nest {} after {} steps", nest.color,ant.steps);
+                            ant.steps = 0;
                         }
                         // let orientation = ant.orientation + PI;
                         // ant.set_orientation(orientation);
@@ -245,72 +247,6 @@ pub fn ant_nest_network_interactions(
                     }
                 }
                 None => continue,
-            }
-        }
-    }
-}
-
-pub fn ant_nest_interactions(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    colors: Res<Colors>,
-    mut ants: Query<(Entity, &mut ant::Ant, &Transform)>,
-    mut nests: Query<(&Nest, &Transform)>,
-) {
-    for (nest, nest_transform) in &mut nests {
-        for (ant_id, mut ant, ant_transform) in &mut ants {
-            if nest.color == ant.target_color {
-                let (nest_pos, nest_size) = pos_size(*nest_transform);
-                let (ant_pos, ant_size) = pos_size(*ant_transform);
-
-                let collision = collide(nest_pos, nest_size * 2., ant_pos, ant_size);
-                match collision {
-                    Some(_) => {
-                        if !ant.carrying_food {
-                            let food_id = commands
-                                .spawn((
-                                    MaterialMesh2dBundle {
-                                        mesh: meshes.add(shape::Circle::default().into()).into(),
-                                        material: colors.color_handles[nest.color].clone(),
-                                        transform: Transform::from_translation(Vec3 {
-                                            x: ant_pos.x,
-                                            y: ant_pos.y,
-                                            z: FOOD_HEIGHT as f32,
-                                        })
-                                        .with_scale(FOOD_SIZE_V3),
-                                        visibility: Visibility { is_visible: true },
-                                        ..default()
-                                    },
-                                    Food::new(nest.color),
-                                ))
-                                .id();
-                            commands.entity(ant_id).add_child(food_id);
-                            ant.target_color = ant.parent_color;
-                            // not parent but this will cause to and from pheromone trails
-                            // to be set on the way to target and on the way back
-                            ant.parent_color = nest.color;
-                            ant.carrying_food = true;
-                            // TODO: reverse ant orientation or something
-                            log::info!(
-                                "Ant reached nest {}. returning to {}",
-                                nest.color,
-                                ant.target_color
-                            );
-                            // let orientation = ant.orientation + PI;
-                            // ant.set_orientation(orientation);
-                            // ant.set_target_orientation(orientation);
-                            ant.turn_around = true;
-                        } else {
-                            commands.entity(ant_id).despawn_descendants();
-                            log::info!("Ant reached target {}", nest.color);
-                            ant.target_color = ant.parent_color;
-                            ant.parent_color = nest.color;
-                            ant.carrying_food = false;
-                            ant.turn_around = true;
-                        }
-                    }
-                    None => continue,
-                }
             }
         }
     }
