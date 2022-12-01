@@ -284,6 +284,7 @@ pub fn create_pheromone_manager(
 
 pub fn fade_pheromones(
     mut commands: Commands,
+    mut pheromone_manager: Query<&mut PheromoneManager>,
     mut pheromones: Query<
         (
             Entity,
@@ -294,13 +295,19 @@ pub fn fade_pheromones(
     >,
     params: Res<PheromoneParams>,
 ) {
+    let pheromone_manager = &mut pheromone_manager
+        .get_single_mut()
+        .expect("there should be pheromones");
     for (id, mut pheromone, mut visibility) in &mut pheromones {
         pheromone.fade(params.trail_fade_rate);
         visibility.is_visible = !pheromone.is_empty();
         if !visibility.is_visible {
             // will prevent this pheromone from being looped over until another ant steps on it
             // log::info!("removed pheromone at {:?}", id);
-            commands.entity(id).remove::<NonEmptyTrail>();
+            // commands.entity(id).remove::<NonEmptyTrail>();
+            let pheromone_loc = pheromone.loc;
+            commands.entity(id).despawn();
+            pheromone_manager[pheromone_loc] = None;
         }
         // log::info!("pheromone visible: {}", visibility.is_visible);
     }
