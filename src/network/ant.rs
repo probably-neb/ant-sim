@@ -8,7 +8,7 @@ use crate::{
 };
 
 use super::{nest::{Nest, NestColors},
-    pheromones::{self, Pheromone, PheromoneManager},
+    pheromones::{self, Pheromone, PheromoneManager}, DecisionWeights,
 };
 
 use bevy::{ecs::component::Component, log, prelude::*};
@@ -245,18 +245,6 @@ impl Bounds {
     }
 }
 
-// the angles ants can set as their target_orientation
-const ANG: f32 = PI / 6.;
-const STEP_PERCENT: f32 = 0.4;
-// if the ants orientation is within this much of its target orientation it is considered to have
-// reached its target orientation
-const ACCEPTABLE_ORIENTATION_BOUND: f32 = PI / 48.;
-const ANT_NEST_SCAN_RANGE: f32 = 50.;
-
-const DISTANCE_POW: f32 = 2.;
-const PHEROMONE_POW: f32 = 4.;
-const VISITED_POW: f32 = 2.;
-
 pub const SYSTEM_PHEROMONE_FADE_SPEED: f32 = 0.03;
 pub const SYSTEM_PHEROMONE_GROW_SPEED: f32 = 0.1;
 
@@ -268,6 +256,7 @@ pub fn move_ant(
     time: Res<Time>,
     mut nests: Query<(Entity, &mut Nest)>,
     nest_ids: Res<NestColors>,
+    decision_weights: Res<DecisionWeights>,
 ) {
     let mut rng = thread_rng();
     let pheromone_manager = pheromone_manager
@@ -279,12 +268,8 @@ pub fn move_ant(
         let ant_loc = transform.translation.truncate();
         let bounds_situation = Bounds::check(transform.translation, bounds / 2.0);
 
-        if let Some(bounds_problem) = bounds_situation {
-            // let recommendation = bounds_problem.where_should_i_go_instead(ant.orientation);
-            // let delta = recommendation.where_to_point_now - ant.orientation;
-            // ant.rotate_hard(&mut transform, delta);
-            // reset pathfinding
-            // ant.leave_nest();
+        if let Some(_bounds_problem) = bounds_situation {
+            //
             ant.pop_prev_nest();
         }
         if let Some(current_nest_color) = ant.current_nest {
@@ -317,10 +302,10 @@ pub fn move_ant(
                     // ensure no div by 0
                     .max(1.0);
 
-                distance_factor = (1.0 / distance_factor).powf(DISTANCE_POW);
-                pheromone_factor = pheromone_factor.powf(PHEROMONE_POW);
+                distance_factor = (1.0 / distance_factor).powf(decision_weights.distance_pow);
+                pheromone_factor = pheromone_factor.powf(decision_weights.pheromone_pow);
                 // make it less likely to visit ones we've been too recently
-                visited_factor = (1.0 / visited_factor).powf(VISITED_POW);
+                visited_factor = (1.0 / visited_factor).powf(decision_weights.visited_pow);
                 // log::info!("factors: dist: {} pher: {} visit: {}", distance_factor, pheromone_factor, visited_factor);
                 let mut factors = vec![distance_factor, pheromone_factor, visited_factor];
 

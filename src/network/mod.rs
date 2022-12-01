@@ -9,6 +9,9 @@ use crate::{Colors, GameState, GameMode, NumAnts};
 use bevy::prelude::*;
 use iyes_loopless::prelude::*;
 
+#[cfg(feature = "debug")]
+use bevy_inspector_egui::InspectorPlugin;
+
 pub struct AntNetworkPlugin;
 
 impl Plugin for AntNetworkPlugin {
@@ -16,6 +19,7 @@ impl Plugin for AntNetworkPlugin {
         app
         .init_resource::<Colors>()
         .init_resource::<NumAnts>()
+        .init_resource::<DecisionWeights>()
         .add_startup_system(pheromones::create_pheromone_manager)
         .add_startup_system(nest::spawn_nests)
         .add_startup_system(ant::load_ant_texture)
@@ -70,5 +74,31 @@ impl Plugin for AntNetworkPlugin {
         // .add_system(ant::ant_wander)
         // .add_system(pheromones::print_angle)
         // .add_system(print_camera)
+
+        #[cfg(feature = "debug")]
+        app.add_plugin(InspectorPlugin::<DecisionWeights>::new());
+
+    }
+}
+
+const DISTANCE_POW: f32 = 2.;
+const PHEROMONE_POW: f32 = 4.;
+const VISITED_POW: f32 = 2.;
+
+#[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
+#[derive(Debug,Clone,Resource,)]
+pub struct DecisionWeights {
+    pub distance_pow: f32,
+    pub pheromone_pow: f32,
+    pub visited_pow: f32,
+}
+
+impl Default for DecisionWeights {
+    fn default() -> Self {
+        return Self {
+            distance_pow: DISTANCE_POW,
+            pheromone_pow: PHEROMONE_POW,
+            visited_pow: VISITED_POW,
+        }
     }
 }
