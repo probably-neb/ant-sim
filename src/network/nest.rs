@@ -220,27 +220,25 @@ pub fn ant_nest_network_interactions(
                             // to be set on the way to target and on the way back
                             ant.parent_color = nest.color;
                             ant.carrying_food = true;
-                            log::info!(
-                                "Ant reached target nest {} returning to parent with food",
-                                nest.color,
-                            );
+                            log::info!("Ant reached target nest {} after {} steps", nest.color,ant.prev_nests.len());
                         } else {
+                            // despawn food
                             commands.entity(ant_id).despawn_descendants();
                             ant.target_color = ant.parent_color;
                             ant.parent_color = nest.color;
                             ant.carrying_food = false;
-                            log::info!("Ant reached parent nest {} dropping off food", nest.color,);
+                            log::info!("Ant reached parent nest {} after {} steps", nest.color,ant.prev_nests.len());
                         }
                         // let orientation = ant.orientation + PI;
                         // ant.set_orientation(orientation);
                         // ant.set_target_orientation(orientation);
                         // ant.turn_around = true;
                     } else {
-                        log::info!(
-                            "ant heading to {} taking pit stop at {}",
-                            ant.target_color,
-                            nest.color
-                        );
+                        // log::info!(
+                        //     "ant heading to {} taking pit stop at {}",
+                        //     ant.target_color,
+                        //     nest.color
+                        // );
                         // figure out jump point
                         //
                         ant.visit_nest(nest.color);
@@ -255,7 +253,6 @@ pub fn ant_nest_network_interactions(
 pub fn ant_nest_interactions(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     colors: Res<Colors>,
     mut ants: Query<(Entity, &mut ant::Ant, &Transform)>,
     mut nests: Query<(&Nest, &Transform)>,

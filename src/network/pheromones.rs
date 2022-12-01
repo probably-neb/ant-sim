@@ -1,5 +1,5 @@
 use std::{
-    f32::consts::{FRAC_PI_4, FRAC_PI_8, PI, TAU},
+    f32::consts::{FRAC_PI_4, FRAC_PI_8, TAU},
     ops::{Index, IndexMut},
 };
 
@@ -336,21 +336,40 @@ pub fn create_pheromone_manager(
     entity_commands.insert(manager);
 }
 
-pub fn color_and_fade_pheromones(
+pub fn fade_pheromones(
     mut commands: Commands,
     mut pheromones: Query<
         (
             Entity,
             &mut Pheromone,
             &mut Visibility,
+        ),
+        With<NonEmptyTrail>,
+    >,
+) {
+    for (id, mut pheromone, mut visibility) in &mut pheromones {
+        pheromone.fade();
+        visibility.is_visible = !pheromone.is_empty();
+        if !visibility.is_visible {
+            // will prevent this pheromone from being looped over until another ant steps on it
+            // log::info!("removed pheromone at {:?}", id);
+            commands.entity(id).remove::<NonEmptyTrail>();
+        }
+        // log::info!("pheromone visible: {}", visibility.is_visible);
+    }
+}
+
+pub fn color_pheromones(
+    mut pheromones: Query<
+        (
+            &Pheromone,
             &mut Handle<ColorMaterial>,
         ),
         With<NonEmptyTrail>,
     >,
     colors: Res<Colors>,
 ) {
-    log::warn!("Pheromones were faded");
-    for (id, mut pheromone, mut visibility, mut color_handle) in &mut pheromones {
+    for (pheromone, mut color_handle) in &mut pheromones {
         // color trail
         let color_id = pheromone.most_prominent();
         let cur_color_handle: &Handle<ColorMaterial> = &colors.color_handles[color_id];
@@ -368,13 +387,6 @@ pub fn color_and_fade_pheromones(
         //     .expect("pheromones should have a color");
         //
         // material.color = *color.clone().set_a(weight);
-        pheromone.fade();
-        visibility.is_visible = !pheromone.is_empty();
-        if !visibility.is_visible {
-            // will prevent this pheromone from being looped over until another ant steps on it
-            commands.entity(id).remove::<NonEmptyTrail>();
-        }
-        // log::info!("pheromone visible: {}", visibility.is_visible);
     }
 }
 
@@ -400,7 +412,7 @@ pub fn print_angle(
         tup.2.is_visible = true;
         materials.get_mut(&tup.3).unwrap().color = Color::RED;
     }
-    let mut mid = pheromones
+    let mid = pheromones
         .get_mut(manager.id_of_pheromone_at(Vec2::splat(0.), 736., 955.5))
         .unwrap();
     materials.get_mut(&mid.3).unwrap().color = Color::AQUAMARINE;

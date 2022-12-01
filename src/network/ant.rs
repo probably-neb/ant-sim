@@ -274,7 +274,6 @@ pub fn move_ant(
         .get_single()
         .expect("there should be pheromones");
     let bounds = pheromone_manager.win;
-    log::warn!("Ants were moved");
 
     for (mut transform, mut ant, mut pheromone_timer) in &mut ants {
         let ant_loc = transform.translation.truncate();
@@ -352,7 +351,7 @@ pub fn move_ant(
             //     dbg!(new_trajectory.normalize());
             //     delta = 0.0;
             // }
-            log::info!("ant with target {} stopped at {} now going to {} (delta {} chance: {}%)",  ant.target_color,current_nest_color, next_nest.color, delta.to_degrees(), weights[next_nest_color]*100.);
+            // log::info!("ant with target {} stopped at {} now going to {} (delta {} chance: {}%)",  ant.target_color,current_nest_color, next_nest.color, delta.to_degrees(), weights[next_nest_color]*100.);
 
             let new_orientation = ant.orientation + delta;
             transform.rotate_z(delta);

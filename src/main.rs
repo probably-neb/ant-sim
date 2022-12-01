@@ -1,4 +1,5 @@
 use ant_sim::*;
+use bevy::diagnostic::{LogDiagnosticsPlugin, FrameTimeDiagnosticsPlugin, EntityCountDiagnosticsPlugin};
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::WorldInspectorPlugin;
 
@@ -21,14 +22,11 @@ fn main() {
         app.add_startup_system(setup_camera)
         .add_loopless_state(GameMode::AntNetwork)
         .add_loopless_state(GameState::Play)
-        // .init_resource::<Colors>()
-        // .init_resource::<BoundingBox>()
-        // .init_resource::<NumAnts>()
         .add_plugin(network::AntNetworkPlugin)
-        // .add_startup_system(pheromones::create_pheromone_manager)
-        // .add_startup_system(nest::spawn_nests)
-        // .add_startup_system(ant::load_ant_texture)
         .add_system(toggle_playing)
+        .add_plugin(LogDiagnosticsPlugin::default())
+        .add_plugin(FrameTimeDiagnosticsPlugin::default())
+        .add_plugin(EntityCountDiagnosticsPlugin::default())
         // .add_system_set(
         //     SystemSet::on_update(GameState::Play)
         //         .with_system(nest::food_request_system)

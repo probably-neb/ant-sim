@@ -1,10 +1,4 @@
-use bevy::{
-    render::color::Color,
-    ecs::component::Component,
-    prelude::Commands,
-};
-use rand::{thread_rng,Rng};
-use crate::NEST_FOOD_REQUEST_PROB;
+use bevy::ecs::component::Component;
 
 #[derive(Debug, Clone, Copy, Component)]
 pub struct Food {
