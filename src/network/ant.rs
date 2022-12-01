@@ -89,6 +89,11 @@ impl Ant {
     pub fn pop_prev_nest(&mut self) {
         self.current_nest = Some(self.prev_nest());
     }
+
+    pub fn wipe_mem(&mut self) {
+        self.steps = 0;
+        self.prev_nests.truncate(1);
+    }
 }
 
 #[derive(Bundle)]

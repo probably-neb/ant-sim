@@ -221,7 +221,7 @@ pub fn ant_nest_network_interactions(
                             ant.parent_color = nest.color;
                             ant.carrying_food = true;
                             log::info!("Ant reached target nest {} after {} steps", nest.color,ant.steps);
-                            ant.steps = 0;
+                            ant.wipe_mem()
                         } else {
                             // despawn food
                             commands.entity(ant_id).despawn_descendants();
@@ -229,7 +229,7 @@ pub fn ant_nest_network_interactions(
                             ant.parent_color = nest.color;
                             ant.carrying_food = false;
                             log::info!("Ant reached parent nest {} after {} steps", nest.color,ant.steps);
-                            ant.steps = 0;
+                            ant.wipe_mem()
                         }
                         // let orientation = ant.orientation + PI;
                         // ant.set_orientation(orientation);
