@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use crate::{
     Colors, NumAnts, BORDER_PADDING, FOOD_HEIGHT, FOOD_SIZE_V3, MAX_ANTS,
     NEST_FOOD_REQUEST_PROB, NEST_HEIGHT, NEST_SIZE, NUM_NESTS, NEST_SPREAD, HexagonMesh,
@@ -100,6 +102,21 @@ pub struct NestColors {
     pub nests: Vec<Entity>,
 }
 
+// http://blog.marmakoide.org/?p=1
+fn gen_fib_coords(num_points: usize, max_r: f32) -> Vec<Vec2> {
+    let golden_angle: f32 = PI * (3.0 - 5.0_f32.sqrt());
+    let mut pnts = vec![Vec2::ZERO; num_points];
+    let num_points_f = num_points as f32;
+    for i in 0..num_points {
+        let i_f = i as f32;
+        let theta = (i_f) * golden_angle;
+        let r = (i_f.sqrt() / num_points_f.sqrt()) * max_r;
+        pnts[i] = Vec2::from_angle(theta) * r;
+    }
+
+    return pnts;
+}
+
 fn gen_hex_coords(w: u32, h: u32) -> Vec<Vec2> {
     let mut coords = Vec::with_capacity((w * h) as usize);
     // step by 2
@@ -135,15 +152,20 @@ pub fn spawn_nests(
         let e = Entity::from_raw(i as u32);
         nests.push(e);
     }
-    let hex_bounds = (bounds / NEST_SPREAD).as_uvec2();
-    let mut coords: Vec<Vec2> = gen_hex_coords(hex_bounds.x, hex_bounds.y)
-        .iter()
-        .map(|&v| -(bounds / 2.) + (v * NEST_SPREAD))
-        .collect();
-    coords.as_mut_slice().shuffle(&mut rng);
-    // println!("coords: {:?}", &coords);
-    // let color = Color::rgba(0., 0., 0., 0.);
-    // FIXME:
+    // hex:
+    // let hex_bounds = (bounds / NEST_SPREAD).as_uvec2();
+    // let mut coords: Vec<Vec2> = gen_hex_coords(hex_bounds.x, hex_bounds.y)
+    //     .iter()
+    //     .map(|&v| -(bounds / 2.) + (v * NEST_SPREAD))
+    //     .collect();
+    // coords.as_mut_slice().shuffle(&mut rng);
+
+    // fib with > NUM_NESTS:
+    // let mut coords = gen_fib_coords(100, bounds.min_element()/2.0);
+    // coords.as_mut_slice().shuffle(&mut rng);
+
+    let mut coords = gen_fib_coords(NUM_NESTS, bounds.min_element()/2.0);
+
     for (color, color_id) in colors.iter() {
         let c = &coords
             .pop()
