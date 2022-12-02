@@ -294,12 +294,14 @@ pub fn fade_pheromones(
         With<NonEmptyTrail>,
     >,
     params: Res<PheromoneParams>,
+    time: Res<Time>,
 ) {
     let pheromone_manager = &mut pheromone_manager
         .get_single_mut()
         .expect("there should be pheromones");
+    let rate = params.trail_fade_rate * (1.0 + time.delta_seconds());
     for (id, mut pheromone, mut visibility) in &mut pheromones {
-        pheromone.fade(params.trail_fade_rate);
+        pheromone.fade(rate);
         visibility.is_visible = !pheromone.is_empty();
         if !visibility.is_visible {
             // will prevent this pheromone from being looped over until another ant steps on it
