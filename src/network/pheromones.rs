@@ -9,6 +9,7 @@ use bevy::{log, prelude::*, sprite::MaterialMesh2dBundle};
 use super::{ant::Ant, pheromones, PheromoneParams};
 
 const PHEROMONE_GRANULARITY: f32 = 4.0;
+const PHEROMONE_SCALE: f32 = 4.0;
 // const PHEROMONE_FADE_PERCENTAGE: f32 = 1.0 - PHEROMONE_FADE_RATE;
 
 #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
@@ -309,7 +310,7 @@ pub fn fade_pheromones(
             // commands.entity(id).remove::<NonEmptyTrail>();
             let pheromone_loc = pheromone.loc;
             commands.entity(id).despawn();
-            pheromone_manager[pheromone_loc] = None;
+            pheromone_manager[pheromone_loc].take(); // = None;
         }
         // log::info!("pheromone visible: {}", visibility.is_visible);
     }
@@ -318,7 +319,7 @@ pub fn fade_pheromones(
 pub fn leave_pheromone_trails(
     mut commands: Commands,
     ants: Query<(&Ant, &Transform)>,
-    pheromone_manager: Query<(Entity, &PheromoneManager)>,
+    mut pheromone_manager: Query<(Entity, &mut PheromoneManager)>,
     mut pheromones: Query<
         (
             Entity,
@@ -330,8 +331,8 @@ pub fn leave_pheromone_trails(
     pher_params: Res<PheromoneParams>,
     hex_mesh: Res<HexagonMesh>,
 ) {
-    let (manager_id, pheromone_manager) = pheromone_manager
-        .get_single()
+    let (manager_id, mut pheromone_manager) = pheromone_manager
+        .get_single_mut()
         .expect("there should be pheromones");
     let bounds = pheromone_manager.win;
     for (ant, transform) in &ants {
@@ -342,11 +343,12 @@ pub fn leave_pheromone_trails(
 
         let trail_color = ant.parent_color;
 
-        match opt_pheromone_tile {
-            Some(pheromone_tile) => {
-                let (_, mut pheromone, mut color_handle) = pheromones
-                    .get_mut(pheromone_tile)
-                    .expect("pheromone manager shouldn't have bastards");
+        match opt_pheromone_tile.and_then( |pheromone_tile| 
+                                      pheromones
+                                      .get_mut(pheromone_tile)
+                                      .ok()
+                                      ) {
+            Some((pheromone_tile, mut pheromone, mut color_handle)) => {
 
                 // to find our way home
                 pheromone.add_trail(trail_color, pher_params.trail_step);
@@ -371,22 +373,23 @@ pub fn leave_pheromone_trails(
 
                 pheromone.add_trail(trail_color,pher_params.trail_step);
 
+                let scaled_loc = pheromone_loc * PHEROMONE_GRANULARITY;
                 commands.entity(manager_id).with_children(
-                    |builder| { 
-                        let scaled_loc = pheromone_loc * PHEROMONE_GRANULARITY;
-                        builder.spawn((
+                    |builder| {
+                        let new_pher_id = builder.spawn((
                             MaterialMesh2dBundle {
                                 // mesh: meshes.add(shape::Circle::default().into()).into(),
                                 mesh: hex_mesh.clone_weak().into(),
                                 //FIXME: no color here
                                 material: color_handle.clone_weak(),
                                 transform: Transform::from_xyz(scaled_loc.x, scaled_loc.y, BOARD_HEIGHT as f32)
-                                    .with_scale(Vec3::splat(PHEROMONE_GRANULARITY)),
+                                    .with_scale(Vec3::splat(PHEROMONE_SCALE)),
                                     ..default()
                             },
                             pheromone,
                             pheromones::NonEmptyTrail,
-                            ));
+                            )).id();
+                        pheromone_manager[pheromone_loc] = Some(new_pher_id);
                     }
 
                  );
