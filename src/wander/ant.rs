@@ -1,14 +1,19 @@
-use std::f32::consts::{PI, TAU};
-
-use crate::{
-    pheromones::{Pheromone, PheromoneManager, self},
-    ANT_ANIMATION_SPEED, ANT_SCALE, ANT_SPEED, BORDER_PADDING, nest::{NestColors, Nest}
+use std::{
+    collections::VecDeque,
+    f32::consts::{FRAC_PI_2, PI, TAU},
 };
-use bevy::{ecs::component::Component, prelude::*, render::color::Color, log};
-use rand::{seq::IteratorRandom, thread_rng, Rng};
 
-#[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
-#[derive(Debug, Component)]
+use super::{
+    nest::{Nest, NestColors},
+    pheromones::{self, Pheromone, PheromoneManager},
+};
+
+use crate::{ANT_ANIMATION_SPEED, ANT_SCALE, ANT_SPEED, BORDER_PADDING, NUM_NESTS};
+
+use bevy::{ecs::component::Component, log, prelude::*};
+use rand::{thread_rng, Rng};
+
+#[derive(Debug, Component, Reflect)]
 pub struct Ant {
     pub target_color: usize,
     pub parent_color: usize,
@@ -16,28 +21,41 @@ pub struct Ant {
     pub orientation: f32,
     pub target_orientation: f32,
     pub turn_around: bool,
-    // pub following_trail: bool,
 }
 
 impl Ant {
     fn new(target_color: usize, parent_color: usize) -> Self {
         let mut rng = thread_rng();
         let angle = rng.gen_range(0.0..TAU);
+        // let angle = FRAC_PI_2;
+        let mut prev_nests = VecDeque::with_capacity(NUM_NESTS);
+        prev_nests.push_front(parent_color);
         Self {
             target_color,
             parent_color,
             carrying_food: false,
             turn_around: false,
             orientation: angle,
-            target_orientation: angle, 
+            target_orientation: angle,
         }
     }
+
+    #[inline]
     pub fn set_target_orientation(&mut self, angle: f32) {
         self.target_orientation = angle % TAU;
     }
 
+    #[inline]
     pub fn set_orientation(&mut self, angle: f32) {
         self.orientation = angle % TAU;
+    }
+
+    #[inline]
+    fn rotate_hard(&mut self, t: &mut Transform, delta: f32) {
+        t.rotate_z(delta);
+        let new_orientation = self.orientation + delta;
+        self.set_orientation(new_orientation);
+        self.set_target_orientation(new_orientation);
     }
 }
 
@@ -46,8 +64,10 @@ pub struct AntBundle {
     ant: Ant,
     animation_timer: AntAnimationTimer,
     sprite_sheet: SpriteSheetBundle,
+    pheromone_timer: AntPheromoneTimer,
 }
 
+const ANT_DROP_VISIBLE_PHEROMONE_SPEED: f32 = 0.2;
 impl AntBundle {
     pub fn new(
         transform: &Transform,
@@ -56,23 +76,37 @@ impl AntBundle {
         ant_texture: &Handle<TextureAtlas>,
     ) -> Self {
         let ant = Ant::new(target, parent);
-        return Self {
+        let q = Quat::from_rotation_z(ant.orientation - FRAC_PI_2);
+        // log::info!(
+        //     "Quat {:?} going from {} to {}",
+        //     q.to_axis_angle(),
+        //     FRAC_PI_2,
+        //     ant.orientation
+        // );
+        Self {
             sprite_sheet: SpriteSheetBundle {
                 texture_atlas: ant_texture.clone(),
-                transform: transform.with_scale(ANT_SCALE).with_rotation(Quat::from_rotation_z(-ant.orientation)),
+                transform: transform.with_scale(ANT_SCALE).with_rotation(q),
                 ..default()
             },
             animation_timer: AntAnimationTimer(Timer::from_seconds(
                 ANT_ANIMATION_SPEED,
                 TimerMode::Repeating,
             )),
+            pheromone_timer: AntPheromoneTimer(Timer::from_seconds(
+                ANT_DROP_VISIBLE_PHEROMONE_SPEED,
+                TimerMode::Repeating,
+            )),
             ant,
-        };
+        }
     }
 }
 
 #[derive(Component, Deref, DerefMut)]
 pub struct AntAnimationTimer(Timer);
+
+#[derive(Component, Deref, DerefMut)]
+pub struct AntPheromoneTimer(Timer);
 
 #[derive(Resource, Deref)]
 pub struct AntTexture(pub Handle<TextureAtlas>);
@@ -129,7 +163,7 @@ impl Bounds {
                 collision = Some(Self::DOWN);
             }
         }
-        return collision;
+        collision
     }
     fn rad(self) -> f32 {
         match self {
@@ -140,7 +174,7 @@ impl Bounds {
         }
     }
 
-    fn where_should_i_go_instead(self, ant_orientation: f32) -> Recommendation {
+    fn where_should_i_go_instead(self, _ant_orientation: f32) -> Recommendation {
         // recommends pointing clockwise with target orientation away from the wall
         // only recommends an immediate change in orientation (as opposed to a target orientation)
         // if the ant is pointing towards the wall
@@ -185,25 +219,24 @@ impl Bounds {
 
 // the angles ants can set as their target_orientation
 const ANG: f32 = PI / 6.;
-const CCW_ANG: f32 = ANG;
-const CW_ANG: f32 = -ANG;
-const STRAIGHT: f32 = 0.;
-const OPTS: [f32; 5] = [CCW_ANG, STRAIGHT, STRAIGHT, STRAIGHT, CW_ANG];
 const STEP_PERCENT: f32 = 0.4;
 // if the ants orientation is within this much of its target orientation it is considered to have
 // reached its target orientation
 const ACCEPTABLE_ORIENTATION_BOUND: f32 = PI / 48.;
-const ANT_NEST_SCAN_RANGE: f32 = 150.;
+const ANT_NEST_SCAN_RANGE: f32 = 50.;
 
-pub fn move_ant(
+pub const SYSTEM_PHEROMONE_FADE_SPEED: f32 = 0.03;
+pub const SYSTEM_PHEROMONE_GROW_SPEED: f32 = 0.1;
+
+pub fn ant_wander(
     mut commands: Commands,
     mut query: Query<(&mut Transform, &mut Ant)>,
     windows: Res<Windows>,
     pheromone_manager: Query<&PheromoneManager>,
     mut pheromones: Query<&mut Pheromone>,
     time: Res<Time>,
-    nests: Query<(Entity,&Nest)>,
-    nest_ids: Res<NestColors>
+    nests: Query<(Entity, &Nest)>,
+    nest_ids: Res<NestColors>,
 ) {
     let mut rng = thread_rng();
     let window = windows.primary();
@@ -214,6 +247,8 @@ pub fn move_ant(
     let pheromone_manager = pheromone_manager
         .get_single()
         .expect("there should be pheromones");
+
+    log::info!("Ants left pheromones");
 
     for (mut transform, mut ant) in &mut query {
         if ant.turn_around {
@@ -239,7 +274,9 @@ pub fn move_ant(
 
         let mut wander_angle = ANG;
         let nest_id = nest_ids.nests[ant.target_color];
-        let (_, nest) = nests.get(nest_id).expect("ant shouldn't target non-existent nest");
+        let (_, nest) = nests
+            .get(nest_id)
+            .expect("ant shouldn't target non-existent nest");
         let nest_loc = nest.loc;
         if ant_loc.distance(nest_loc) <= ANT_NEST_SCAN_RANGE {
             let dest_trajectory = -(nest_loc - ant_loc);
@@ -251,22 +288,34 @@ pub fn move_ant(
             wander_angle = 0.0;
         }
 
-
+        // TODO: FIXME: ASAP: target color on return trip should be
+        // same trail we left behind
+        let mut target_color = ant.target_color;
+        if ant.carrying_food {
+            target_color = ant.parent_color;
+        }
         let adjacent_pheromones =
             pheromone_manager.ids_of_adjacent_pheromones(ant.orientation, ant_loc);
         let strongest_pheromone = adjacent_pheromones
             .iter()
-            .map(|(e,v)| (pheromones.get(*e).expect("adjacent_pheromones should exist"),v))
-            .filter_map(|(p,v)| {
-                let weight = p.weights[ant.target_color as usize];
+            .map(|(e, v)| {
+                (
+                    pheromones
+                        .get(*e)
+                        .expect("adjacent_pheromones should exist"),
+                    v,
+                )
+            })
+            .filter_map(|(p, v)| {
+                let weight = p.weights[target_color];
                 if weight <= f32::EPSILON {
-                    return None;
+                    None
                 } else {
-                    return Some((weight, v));
+                    Some((weight, v))
                 }
             })
-            .max_by_key(|(w,v)| (*w*100.0) as usize)
-            .map(|(_,v)| v);
+            .max_by_key(|(w, _v)| (*w * 100.0) as usize)
+            .map(|(_w, v)| v);
 
         let mut diff = ant.target_orientation - ant.orientation;
         if let Some(destination) = strongest_pheromone {
@@ -275,7 +324,7 @@ pub fn move_ant(
             let delta = curr_trajectory.angle_between(dest_trajectory);
             // let mut new_orientation = ant.orientation;
             if !delta.is_nan() && delta.abs() != 0.0 {
-                let new_orientation = ant.orientation+delta;
+                let new_orientation = ant.orientation + delta;
                 // transform.rotate_z(delta);
                 // ant.set_orientation(new_orientation);
                 ant.set_target_orientation(new_orientation);
@@ -283,7 +332,7 @@ pub fn move_ant(
             }
             // current trajectory is correct?
             // else {
-                // ant.set_target_orientation(new_orientation);
+            // ant.set_target_orientation(new_orientation);
             // }
         }
         if diff.abs() <= ACCEPTABLE_ORIENTATION_BOUND && wander_angle != 0.0 {
@@ -299,8 +348,10 @@ pub fn move_ant(
             .get_mut(pheromone_tile)
             .expect("pheromone manager shouldn't have bastards");
         // to find our way home
-        pheromone.add_trail(ant.target_color, ant.target_color);
-        commands.entity(pheromone_tile).insert(pheromones::NonEmptyTrail);
+        pheromone.add_trail(ant.parent_color);
+        commands
+            .entity(pheromone_tile)
+            .insert(pheromones::NonEmptyTrail);
         // pheromone.add_trail(ant.parent_color);
         // TODO: system to colorize pheromones
 
@@ -309,8 +360,8 @@ pub fn move_ant(
         ant.orientation %= 2.0 * PI;
         transform.rotate_z(rotation);
         let delta_time = f32::min(0.2, time.delta_seconds());
-        transform.translation.x += delta_time*ANT_SPEED * ant.orientation.cos();
-        transform.translation.y += delta_time*ANT_SPEED * ant.orientation.sin();
+        transform.translation.x += delta_time * ANT_SPEED * ant.orientation.cos();
+        transform.translation.y += delta_time * ANT_SPEED * ant.orientation.sin();
     }
 }
 

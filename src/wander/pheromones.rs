@@ -1,39 +1,36 @@
 use std::{
-    f32::consts::{FRAC_PI_4, PI, TAU, FRAC_PI_8},
+    f32::consts::{FRAC_PI_8, TAU},
     ops::{Index, IndexMut},
 };
 
-use crate::{Colors, BOARD_HEIGHT, NUM_NESTS};
-use bevy::{log, prelude::*, sprite::MaterialMesh2dBundle};
+use crate::{Colors, BOARD_HEIGHT};
+
+#[allow(unused_imports)]
+use bevy::log;
+
+use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 
 const PHEROMONE_STEP: f32 = 0.10;
-const PHEROMONE_GRANULARITY: f32 = 10.0;
-const PHEROMONE_FADE_RATE: f32 = 0.003;
+const PHEROMONE_GRANULARITY: f32 = 4.0;
+const PHEROMONE_FADE_RATE: f32 = 0.001;
 // const PHEROMONE_FADE_PERCENTAGE: f32 = 1.0 - PHEROMONE_FADE_RATE;
 
-#[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Debug, Component)]
 pub struct Pheromone {
     // TODO: NUM_COLORS not num nests
     pub weights: Vec<f32>,
-    loc: Vec2,
 }
 
 #[derive(Component, Default)]
 pub struct NonEmptyTrail;
 
 impl Pheromone {
-    pub fn new(_num_colors: usize, loc: Vec2) -> Self {
-        let weights = vec![0.; NUM_NESTS];
-        return Self { weights, loc };
+    pub fn new(num_colors: usize) -> Self {
+        let weights = vec![0.; num_colors];
+        Self { weights }
     }
-    pub fn add_trail(&mut self, target: usize, parent: usize) {
-        // let mut scale = 1.0;
-        // if carrying_food {
-        //     scale = 2.0;
-        // }
-        self.weights[target] += PHEROMONE_STEP;
-        self.weights[parent] += 0.99*PHEROMONE_STEP;
+    pub fn add_trail(&mut self, color: usize) {
+        self.weights[color] += PHEROMONE_STEP;
     }
 
     pub fn is_empty(&self) -> bool {
@@ -51,37 +48,28 @@ impl Pheromone {
     }
     pub fn fade(&mut self) {
         for w in &mut self.weights {
-            if *w > PHEROMONE_FADE_RATE {
-                *w -= PHEROMONE_FADE_RATE;
-            } else {
-                *w = 0.0;
-            }
+            *w = (*w - PHEROMONE_FADE_RATE).max(0.0);
         }
     }
 }
 
-fn contained(target: f32, min: f32, max: f32) -> bool {
-    return target <= max && target >= min;
-}
-
-// #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Debug, Component)]
 pub struct PheromoneManager {
     //TODO: add field for window dims instead of passing them around constantly
     grid_dims: Vec2,
     child_ids: Vec<Entity>,
-    win: Vec2,
+    pub win: Vec2,
 }
 
 impl PheromoneManager {
     fn get_grid_dims_from_window_size(width: f32, height: f32) -> Vec2 {
         let width = width / PHEROMONE_GRANULARITY;
         let height = height / PHEROMONE_GRANULARITY;
-        let grid_dims = Vec2 {
+
+        Vec2 {
             x: width,
             y: height,
-        };
-        return grid_dims;
+        }
     }
     pub fn new(w_width: f32, w_height: f32) -> Self {
         let grid_dims = Self::get_grid_dims_from_window_size(w_width, w_height);
@@ -96,21 +84,21 @@ impl PheromoneManager {
             x: w_width,
             y: w_height,
         };
-        return Self {
+        Self {
             grid_dims,
             child_ids,
             win,
-        };
+        }
     }
 
     /// returns the pheromone grid coordinates of the cell containing loc
     fn get_grid_loc(loc: Vec2, window_width: f32, window_height: f32) -> Vec2 {
         let rel_x = loc.x + 0.5 * window_width;
         let rel_y = loc.y + 0.5 * window_height;
-        let x = (rel_x / PHEROMONE_GRANULARITY); //.floor();
-        let y = (rel_y / PHEROMONE_GRANULARITY); //.floor();
-        let grid_loc = Vec2 { x, y };
-        return grid_loc;
+        let x = rel_x / PHEROMONE_GRANULARITY; //.floor();
+        let y = rel_y / PHEROMONE_GRANULARITY; //.floor();
+
+        Vec2 { x, y }
     }
 
     pub fn id_of_pheromone_at(
@@ -120,42 +108,35 @@ impl PheromoneManager {
         window_height: f32,
     ) -> Entity {
         let grid_loc = Self::get_grid_loc(ant_loc, window_width, window_height);
-        let id = self[grid_loc];
-        // println!(
-        //     "ant: {:?}\ngrid: {:?}\nw:w/h {:?}\nid: {:?}\n",
-        //     loc,
-        //     grid_loc,
-        //     (window_width, window_height),
-        //     id
-        // );
-        return id;
+
+        self[grid_loc]
     }
 
     fn index_grid(&self, index: Vec2) -> f32 {
         // A[i][j] = W*j + i
-        return self.grid_dims.x * index.y.floor() + index.x.floor();
+        self.grid_dims.x * index.y.floor() + index.x.floor()
     }
 
     pub fn ids_of_adjacent_pheromones(&self, angle: f32, ant_loc: Vec2) -> Vec<(Entity, Vec2)> {
-        let ul = Vec2 { x: -1.0, y: 1.0 };
-        let uu = Vec2 { x: 0.0, y: 1.0 };
-        let ur = Vec2 { x: 1.0, y: 1.0 };
-        let rr = Vec2 { x: 1.0, y: 0.0 };
-        let dr = Vec2 { x: 1.0, y: -1.0 };
-        let dd = Vec2 { x: 0.0, y: -1.0 };
-        let dl = Vec2 { x: -1.0, y: -1.0 };
-        let ll = Vec2 { x: -1.0, y: 0.0 };
+        // let ul = Vec2 { x: -1.0, y: 1.0 };
+        // let uu = Vec2 { x: 0.0, y: 1.0 };
+        // let ur = Vec2 { x: 1.0, y: 1.0 };
+        // let rr = Vec2 { x: 1.0, y: 0.0 };
+        // let dr = Vec2 { x: 1.0, y: -1.0 };
+        // let dd = Vec2 { x: 0.0, y: -1.0 };
+        // let dl = Vec2 { x: -1.0, y: -1.0 };
+        // let ll = Vec2 { x: -1.0, y: 0.0 };
         let current_tile = Self::get_grid_loc(ant_loc, self.win.x, self.win.y);
         // let mut locs: [Option<Vec2>; 3] = [Some(current_tile); 3];
 
-        let NE = FRAC_PI_4;
-        let NW = 3. * FRAC_PI_4;
-        let SW = 5. * FRAC_PI_4;
-        let SE = 7. * FRAC_PI_4;
+        // let NE = FRAC_PI_4;
+        // let NW = 3. * FRAC_PI_4;
+        // let SW = 5. * FRAC_PI_4;
+        // let SE = 7. * FRAC_PI_4;
 
         // for checking if locs are in bounds
         fn within_bounds(target: f32, min: f32, max: f32) -> bool {
-            return target < max && target >= min;
+            target < max && target >= min
         }
         let mut angle = angle;
 
@@ -179,24 +160,19 @@ impl PheromoneManager {
             max_x += range;
             min_y -= range;
             max_y += range;
-            
-        } 
-        else if dir <= 6 {
+        } else if dir <= 6 {
             // N
             max_x += range;
             min_x -= range;
             min_y += hrange;
             max_y += range;
-        }
-        else if dir <= 10 {
+        } else if dir <= 10 {
             // W
             min_x -= hrange;
             max_x -= range;
             max_y += range;
             min_y -= range;
-
-        }
-        else if dir <= 14 {
+        } else if dir <= 14 {
             // S
             max_x += range;
             min_x -= range;
@@ -281,28 +257,28 @@ impl PheromoneManager {
                 world_loc,
             ));
         }
-        return ids;
+        ids
     }
 }
 
-    impl Index<Vec2> for PheromoneManager {
-        type Output = Entity;
-        fn index(&self, index: Vec2) -> &Self::Output {
-            let idx = self.index_grid(index);
-            // println!(
-            //     "idx: {:?} | x,y: {:?} / dims: {:?}",
-            //     idx, index, self.grid_dims
-            // );
-            let id = &self.child_ids[idx.floor() as usize];
-            return id;
-        }
+impl Index<Vec2> for PheromoneManager {
+    type Output = Entity;
+    fn index(&self, index: Vec2) -> &Self::Output {
+        let idx = self.index_grid(index);
+        // println!(
+        //     "idx: {:?} | x,y: {:?} / dims: {:?}",
+        //     idx, index, self.grid_dims
+        // );
+
+        &self.child_ids[idx.floor() as usize] as _
     }
+}
 
 impl IndexMut<Vec2> for PheromoneManager {
     fn index_mut(&mut self, index: Vec2) -> &mut Self::Output {
         let idx = self.index_grid(index);
-        let id = &mut self.child_ids[idx.floor() as usize];
-        return id;
+
+        &mut self.child_ids[idx.floor() as usize] as _
     }
 }
 
@@ -319,6 +295,7 @@ pub fn create_pheromone_manager(
         transform: Transform::from_xyz(-(width / 2.0), -(height / 2.0), BOARD_HEIGHT as f32),
         ..default()
     },));
+    let default_handle = materials.add(ColorMaterial::default());
     entity_commands.with_children(|builder| {
         for x in (0..manager.grid_dims.x as u32).rev() {
             for y in (0..manager.grid_dims.y as u32).rev() {
@@ -329,15 +306,24 @@ pub fn create_pheromone_manager(
                 let id = builder
                     .spawn((
                         MaterialMesh2dBundle {
-                            mesh: meshes.add(shape::Circle::default().into()).into(),
+                            // mesh: meshes.add(shape::Circle::default().into()).into(),
+                            mesh: meshes
+                                .add(
+                                    (shape::RegularPolygon {
+                                        sides: 6,
+                                        ..default()
+                                    })
+                                    .into(),
+                                )
+                                .into(),
                             //FIXME: no color here
-                            material: materials.add(ColorMaterial::default()),
+                            material: default_handle.clone(),
                             transform: Transform::from_xyz(dim_x, dim_y, BOARD_HEIGHT as f32)
                                 .with_scale(Vec3::splat(PHEROMONE_GRANULARITY)),
                             visibility: Visibility { is_visible: false },
                             ..default()
                         },
-                        Pheromone::new(5, Vec2 { x, y }),
+                        Pheromone::new(5),
                     ))
                     .id();
                 manager[Vec2 { x, y }] = id;
@@ -350,53 +336,33 @@ pub fn create_pheromone_manager(
 
 pub fn color_and_fade_pheromones(
     mut commands: Commands,
-    mut pheromones: Query<(Entity, &mut Pheromone, &mut Visibility, &mut Handle<ColorMaterial>, ), With<NonEmptyTrail>>,
+    mut pheromones: Query<
+        (
+            Entity,
+            &mut Pheromone,
+            &mut Visibility,
+            &mut Handle<ColorMaterial>,
+        ),
+        With<NonEmptyTrail>,
+    >,
     colors: Res<Colors>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    for (id, mut pheromone, mut visibility, color_handle) in &mut pheromones {
+    for (id, mut pheromone, mut visibility, mut color_handle) in &mut pheromones {
+        // color trail
         let color_id = pheromone.most_prominent();
-        let weight = pheromone.weights[color_id];
-        // log::info!("coloring pher with clr: {}", color_id);
-        let color = colors.colors[color_id];
-        let material = materials
-            .get_mut(&color_handle)
-            .expect("pheromones should have a color");
-        material.color = *color.clone().set_a(weight);
-        visibility.is_visible = true;
+        let cur_color_handle: &Handle<ColorMaterial> = &colors.color_handles[color_id];
+        if cur_color_handle.id() != color_handle.id() {
+            *color_handle = Handle::weak(cur_color_handle.id());
+        }
+
         pheromone.fade();
-        if pheromone.is_empty() {
+        visibility.is_visible = !pheromone.is_empty();
+        if !visibility.is_visible {
+            // will prevent this pheromone from being looped over until another ant steps on it
             commands.entity(id).remove::<NonEmptyTrail>();
         }
+        // log::info!("pheromone visible: {}", visibility.is_visible);
     }
-}
-
-pub fn print_angle(
-    mut pheromones: Query<(
-        Entity,
-        &Pheromone,
-        &mut Visibility,
-        &mut Handle<ColorMaterial>,
-    )>,
-    manager: Query<&PheromoneManager>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-) {
-    let manager = manager.get_single().unwrap();
-    let max_loc = manager.grid_dims;
-    let m = max_loc.y / max_loc.x;
-    for x in 0..max_loc.x as usize {
-        let x = x as f32;
-        let y = m * x;
-        let loc = Vec2 { x, y };
-        let id = manager[loc];
-        let mut tup = pheromones.get_mut(id).unwrap();
-        tup.2.is_visible = true;
-        materials.get_mut(&tup.3).unwrap().color = Color::RED;
-    }
-    let mut mid = pheromones
-        .get_mut(manager.id_of_pheromone_at(Vec2::splat(0.), 736., 955.5))
-        .unwrap();
-    materials.get_mut(&mid.3).unwrap().color = Color::AQUAMARINE;
 }
 
 #[cfg(test)]
@@ -408,9 +374,10 @@ mod tests {
         let (x, y) = (8., 8.);
         let loc = PheromoneManager::get_grid_loc(Vec2::splat(0.), x, y);
         assert_eq!(
-            loc, Vec2 { 
-                x: x / PHEROMONE_GRANULARITY, 
-                y: y / PHEROMONE_GRANULARITY 
+            loc,
+            Vec2 {
+                x: x / PHEROMONE_GRANULARITY,
+                y: y / PHEROMONE_GRANULARITY
             }
         );
         let (x, y) = (8., 16.);
