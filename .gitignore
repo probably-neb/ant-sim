@@ -1,1 +1,4 @@
 /target
+bin/ant-sim.js
+bin/ant-sim_bg.wasm
+Cargo.lock
