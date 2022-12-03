@@ -1,7 +1,5 @@
 use ant_sim::*;
 use bevy::diagnostic::{LogDiagnosticsPlugin, FrameTimeDiagnosticsPlugin, EntityCountDiagnosticsPlugin};
-#[cfg(feature = "debug")]
-use bevy_inspector_egui::WorldInspectorPlugin;
 
 fn main() {
     let mut app = App::new();
@@ -14,10 +12,6 @@ fn main() {
             },
             ..default()
         }));
-
-        // #[cfg(feature = "debug")]
-        // app.add_plugin(WorldInspectorPlugin::new())
-        //     .register_inspectable::<PheromoneManager>();
 
         app.add_startup_system(setup_camera)
         .add_loopless_state(GameMode::AntNetwork)

@@ -76,7 +76,8 @@ pub const NEST_COLORS: [Color; 20] = [
 // allowed distance to edge of screen
 const BORDER_PADDING: f32 = 50.0;
 
-#[derive(Resource)]
+#[derive(Resource, Reflect)]
+#[reflect(Resource)]
 pub struct Colors {
     pub colors: Vec<Color>,
     pub color_ids: Vec<usize>,
@@ -117,9 +118,10 @@ impl FromWorld for Colors {
     }
 }
 
-const MAX_ANTS: u32 = 100;
+const MAX_ANTS: u32 = 50;
 
-#[derive(Resource, Deref, DerefMut, Default)]
+#[derive(Resource, Deref, DerefMut, Default, Reflect)]
+#[reflect(Resource)]
 pub struct NumAnts(u32);
 
 #[derive(Resource)]

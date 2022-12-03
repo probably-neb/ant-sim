@@ -8,9 +8,9 @@ use std::time::Duration;
 use crate::{Colors, GameState, GameMode, NumAnts};
 use bevy::prelude::*;
 use iyes_loopless::prelude::*;
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
-#[cfg(feature = "debug")]
-use bevy_inspector_egui::{InspectorPlugin, WorldInspectorPlugin, RegisterInspectable};
+use self::pheromones::{PheromoneManager, PheromoneGrid};
 
 pub struct AntNetworkPlugin;
 
@@ -21,6 +21,12 @@ impl Plugin for AntNetworkPlugin {
         .init_resource::<NumAnts>()
         .init_resource::<DecisionWeights>()
         .init_resource::<PheromoneParams>()
+        .add_plugin(WorldInspectorPlugin)
+        .register_type::<PheromoneParams>()
+        .register_type::<Colors>()
+        .register_type::<NumAnts>()
+        .register_type::<PheromoneManager>()
+        .register_type::<PheromoneGrid>()
         .add_startup_system(pheromones::create_pheromone_manager)
         .add_startup_system(nest::spawn_nests)
         .add_startup_system(ant::load_ant_texture)
@@ -70,7 +76,8 @@ impl Plugin for AntNetworkPlugin {
             pheromones::leave_pheromone_trails
             .run_in_state(GameState::Play)
             .run_in_state(GameMode::AntNetwork)
-        )
+        );
+
         // .add_system_set(
         //     ConditionSet::new()
             // .run_in_state(GameState::Paused)
@@ -78,26 +85,7 @@ impl Plugin for AntNetworkPlugin {
         //     .with_system(ant::animate_ant)
         //     .into()
                        // )
-                       ;
-        // .add_system(ant::ant_wander)
-        // .add_system(pheromones::print_angle)
-        // .add_system(print_camera)
-        use crate::network::pheromones::{PheromoneManager, PheromoneGrid};
-        #[cfg(feature = "debug")]
-        app.add_plugin(WorldInspectorPlugin::new())
-            .register_inspectable::<PheromoneManager>()
-            .register_inspectable::<PheromoneGrid>();
 
-        #[cfg(feature = "debug")]
-        app.add_plugin(InspectorPlugin::<DecisionWeights>::new());
-
-        #[cfg(feature = "debug")]
-        app.add_plugin(InspectorPlugin::<PheromoneParams>::new());
-
-        #[cfg(feature = "debug")]
-        let mut registry = app
-            .world
-            .get_resource_mut::<InspectableRegistry
     }
 }
 
@@ -105,8 +93,8 @@ const DISTANCE_POW: f32 = 1.2;
 const PHEROMONE_POW: f32 = 4.;
 const VISITED_POW: f32 = 2.;
 
-#[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
-#[derive(Debug,Clone,Resource,)]
+#[derive(Debug,Clone,Resource,Reflect)]
+#[reflect(Resource)]
 pub struct DecisionWeights {
     pub distance_pow: f32,
     pub pheromone_pow: f32,
@@ -129,8 +117,8 @@ const TRAIL_PHEROMONE_FADE_RATE: f32 = 0.001;
 const NEST_PHEROMONE_FADE_SPEED: f32 = 0.03;
 const NEST_PHEROMONE_STEP: f32 = 0.1;
 
-#[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
-#[derive(Debug,Clone,Resource,)]
+#[derive(Debug,Clone,Resource,Reflect)]
+#[reflect(Resource)]
 pub struct PheromoneParams {
     pub trail_step: f32,
     pub nest_step: f32,

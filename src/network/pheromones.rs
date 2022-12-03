@@ -13,7 +13,6 @@ const PHEROMONE_GRANULARITY_F: f32 = PHEROMONE_GRANULARITY as f32;
 const PHEROMONE_SCALE: f32 = 4.0;
 // const PHEROMONE_FADE_PERCENTAGE: f32 = 1.0 - PHEROMONE_FADE_RATE;
 
-#[cfg_attr(feature = "debug", derive(Inspectable))]
 #[derive(Debug, Component)]
 pub struct Pheromone {
     // TODO: NUM_COLORS not num nests
@@ -57,32 +56,29 @@ fn contained(target: f32, min: f32, max: f32) -> bool {
     return target <= max && target >= min;
 }
 
-// #[cfg_attr(feature = "debug", derive(Inspectable))]
-#[derive(Debug,Clone, Deref, DerefMut)]
+#[derive(Debug,Clone, Deref, DerefMut, Reflect)]
 pub struct PheromoneGrid(Vec<Option<Entity>>);
 
-#[cfg(feature = "debug")]
-impl Inspectable for PheromoneGrid {
-    type Attributes = ();
-    fn ui(&mut self, ui: &mut egui::Ui, options: Self::Attributes, context: &mut Context) -> bool {
-        let total_len = self.len();
-        let num_filled = self.iter().filter(|c| c.is_some()).count();
-        ui.label(format!("Cells Filled: {}/{}", num_filled, total_len));
-        false
-    }
-}
+// impl Inspectable for PheromoneGrid {
+//     type Attributes = ();
+//     fn ui(&mut self, ui: &mut egui::Ui, options: Self::Attributes, context: &mut Context) -> bool {
+//         let total_len = self.len();
+//         let num_filled = self.iter().filter(|c| c.is_some()).count();
+//         ui.label(format!("Cells Filled: {}/{}", num_filled, total_len));
+//         false
+//     }
+// }
 
 
 
-#[cfg_attr(feature = "debug", derive(Inspectable))]
-#[derive(Debug, Component)]
+#[derive(Debug, Component, Reflect)]
 pub struct PheromoneManager {
     //TODO: add field for window dims instead of passing them around constantly
     grid_dims: UVec2,
     child_ids: PheromoneGrid,
     pub win: UVec2,
 
-    #[inspectable(ignore)]
+    // #[inspectable(ignore)]
     pub color_queue: Vec<(usize,Entity)>,
 }
 
@@ -272,10 +268,13 @@ pub fn create_pheromone_manager(
     let window = windows.primary();
     let (height, width) = (window.height(), window.width());
     let manager = PheromoneManager::new(width, height);
-    let mut entity_commands = commands.spawn((SpatialBundle {
-        transform: Transform::from_xyz(-(width / 2.0), -(height / 2.0), BOARD_HEIGHT as f32),
-        ..default()
-    },));
+    let mut entity_commands = commands.spawn(( 
+            SpatialBundle {
+                transform: Transform::from_xyz(-(width / 2.0), -(height / 2.0), BOARD_HEIGHT as f32),
+                ..default()
+        }, 
+        Name::new("PheromoneManager") 
+        ));
     // let default_handle = materials.add(ColorMaterial::default());
     //entity_commands.with_children(|builder| {
     //    for x in (0..manager.grid_dims.x as u32).rev() {

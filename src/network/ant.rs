@@ -12,7 +12,6 @@ use super::{nest::{Nest, NestColors}, DecisionWeights, PheromoneParams, };
 use bevy::{ecs::component::Component, log, prelude::*};
 use rand::{distributions::WeightedIndex, prelude::*, thread_rng, Rng};
 
-#[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Debug, Component)]
 pub struct Ant {
     pub target_color: usize,

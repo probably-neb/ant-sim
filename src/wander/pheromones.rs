@@ -11,7 +11,6 @@ const PHEROMONE_GRANULARITY: f32 = 4.0;
 const PHEROMONE_FADE_RATE: f32 = 0.001;
 // const PHEROMONE_FADE_PERCENTAGE: f32 = 1.0 - PHEROMONE_FADE_RATE;
 
-#[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Debug, Component)]
 pub struct Pheromone {
     // TODO: NUM_COLORS not num nests
@@ -55,7 +54,6 @@ fn contained(target: f32, min: f32, max: f32) -> bool {
     return target <= max && target >= min;
 }
 
-// #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Debug, Component)]
 pub struct PheromoneManager {
     //TODO: add field for window dims instead of passing them around constantly

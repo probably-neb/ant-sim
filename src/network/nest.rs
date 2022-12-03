@@ -19,7 +19,6 @@ use rand::{
 
 use super::{ant, food::Food, PheromoneParams};
 
-#[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Debug, Component, Clone)]
 pub struct Nest {
     pub color: usize,

@@ -13,8 +13,7 @@ use crate::{ANT_ANIMATION_SPEED, ANT_SCALE, ANT_SPEED, BORDER_PADDING, NUM_NESTS
 use bevy::{ecs::component::Component, log, prelude::*};
 use rand::{thread_rng, Rng};
 
-#[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
-#[derive(Debug, Component)]
+#[derive(Debug, Component, Reflect)]
 pub struct Ant {
     pub target_color: usize,
     pub parent_color: usize,
