@@ -1,7 +1,6 @@
 /target
 *.mp4
 bin/*
-!/bin/assets
 site-assets/make-time-lapse.sh
 site-assets/trim-time-lapse.sh
 perf.data
@@ -16,3 +15,4 @@ output.txt
 assets/large_color_pallete.txt
 flamegraph.svg
 TODO.yml
+Cargo.lock
