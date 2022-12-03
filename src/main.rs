@@ -5,7 +5,7 @@ use bevy::diagnostic::{
 
 fn main() {
     let mut app = App::new();
-    app.add_plugins(MinimalPlugins.set(WindowPlugin {
+    app.add_plugins(DefaultPlugins.set(WindowPlugin {
         window: WindowDescriptor {
             title: "Ant sim".to_string(),
             width: WINDOW_SIZE_X,
