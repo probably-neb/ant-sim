@@ -89,13 +89,13 @@ use std::vec::IntoIter;
 
 impl Colors {
     pub fn iter(&self) -> Zip<IntoIter<Color>, IntoIter<usize>> {
-        return zip(self.colors.clone(), self.color_ids.clone());
+        zip(self.colors.clone(), self.color_ids.clone())
     }
 }
 
 impl FromWorld for Colors {
     fn from_world(world: &mut World) -> Self {
-        let mut assets: &mut Mut<Assets<ColorMaterial>> = &mut world.resource_mut();
+        let assets: &mut Mut<Assets<ColorMaterial>> = &mut world.resource_mut();
         // TODO: turn this into a vec and make it dynamic
         let mut colors: Vec<Color> = NEST_COLORS
             .iter()
@@ -133,11 +133,11 @@ pub struct BoundingBox {
 // TODO: impl FromWorld for dynamic BoundingBox
 impl Default for BoundingBox {
     fn default() -> Self {
-        return Self { w: 200.0, h: 200.0 };
+        Self { w: 200.0, h: 200.0 }
     }
 }
 
-#[derive(Debug,Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum GameState {
     Paused,
     Play,
@@ -146,34 +146,32 @@ pub enum GameState {
 pub fn toggle_playing(
     mut commands: Commands,
     mut keys: ResMut<Input<KeyCode>>,
-    state: Res<CurrentState<GameState>>
-                 ) {
+    state: Res<CurrentState<GameState>>,
+) {
     if keys.just_pressed(KeyCode::Space) {
-        let new_state = match state.0
-            {
-                GameState::Paused => GameState::Play,
-                GameState::Play => GameState::Paused,
-            };
+        let new_state = match state.0 {
+            GameState::Paused => GameState::Play,
+            GameState::Play => GameState::Paused,
+        };
         commands.insert_resource(NextState(new_state));
         keys.reset(KeyCode::Space);
     }
 }
 
-
-#[derive(Debug,Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum GameMode {
     Menu,
     AntNetwork,
     AntWander,
 }
 
-#[derive(Debug,Clone,Resource, Deref, DerefMut)]
+#[derive(Debug, Clone, Resource, Deref, DerefMut)]
 pub struct HexagonMesh(Handle<Mesh>);
 
 impl FromWorld for HexagonMesh {
     fn from_world(world: &mut World) -> Self {
-        let mut meshes: &mut Mut<Assets<Mesh>> = &mut world.resource_mut();
-        let hexagon = meshes.add(shape::Circle::default().into()).into();
-        return Self(hexagon);
+        let meshes: &mut Mut<Assets<Mesh>> = &mut world.resource_mut();
+        let hexagon = meshes.add(shape::Circle::default().into());
+        Self(hexagon)
     }
 }

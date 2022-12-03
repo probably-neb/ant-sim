@@ -8,7 +8,7 @@ use super::{
     pheromones::{self, Pheromone, PheromoneManager},
 };
 
-use crate::{ANT_ANIMATION_SPEED, ANT_SCALE, ANT_SPEED, BORDER_PADDING, NUM_NESTS,};
+use crate::{ANT_ANIMATION_SPEED, ANT_SCALE, ANT_SPEED, BORDER_PADDING, NUM_NESTS};
 
 use bevy::{ecs::component::Component, log, prelude::*};
 use rand::{thread_rng, Rng};
@@ -57,7 +57,6 @@ impl Ant {
         self.set_orientation(new_orientation);
         self.set_target_orientation(new_orientation);
     }
-
 }
 
 #[derive(Bundle)]
@@ -84,7 +83,7 @@ impl AntBundle {
         //     FRAC_PI_2,
         //     ant.orientation
         // );
-        return Self {
+        Self {
             sprite_sheet: SpriteSheetBundle {
                 texture_atlas: ant_texture.clone(),
                 transform: transform.with_scale(ANT_SCALE).with_rotation(q),
@@ -94,9 +93,12 @@ impl AntBundle {
                 ANT_ANIMATION_SPEED,
                 TimerMode::Repeating,
             )),
-            pheromone_timer: AntPheromoneTimer(Timer::from_seconds(ANT_DROP_VISIBLE_PHEROMONE_SPEED, TimerMode::Repeating)),
+            pheromone_timer: AntPheromoneTimer(Timer::from_seconds(
+                ANT_DROP_VISIBLE_PHEROMONE_SPEED,
+                TimerMode::Repeating,
+            )),
             ant,
-        };
+        }
     }
 }
 
@@ -161,7 +163,7 @@ impl Bounds {
                 collision = Some(Self::DOWN);
             }
         }
-        return collision;
+        collision
     }
     fn rad(self) -> f32 {
         match self {
@@ -172,7 +174,7 @@ impl Bounds {
         }
     }
 
-    fn where_should_i_go_instead(self, ant_orientation: f32) -> Recommendation {
+    fn where_should_i_go_instead(self, _ant_orientation: f32) -> Recommendation {
         // recommends pointing clockwise with target orientation away from the wall
         // only recommends an immediate change in orientation (as opposed to a target orientation)
         // if the ant is pointing towards the wall
@@ -307,9 +309,9 @@ pub fn ant_wander(
             .filter_map(|(p, v)| {
                 let weight = p.weights[target_color];
                 if weight <= f32::EPSILON {
-                    return None;
+                    None
                 } else {
-                    return Some((weight, v));
+                    Some((weight, v))
                 }
             })
             .max_by_key(|(w, _v)| (*w * 100.0) as usize)

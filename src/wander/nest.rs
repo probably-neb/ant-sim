@@ -1,7 +1,7 @@
-use super::{
-    ant, food::Food, };
-use crate::{Colors, NumAnts, BORDER_PADDING, FOOD_HEIGHT, FOOD_SIZE_V3, MAX_ANTS,
-    NEST_FOOD_REQUEST_PROB, NEST_HEIGHT, NEST_SIZE, NUM_NESTS, HexagonMesh,
+use super::{ant, food::Food};
+use crate::{
+    Colors, HexagonMesh, NumAnts, BORDER_PADDING, FOOD_HEIGHT, FOOD_SIZE_V3, MAX_ANTS,
+    NEST_FOOD_REQUEST_PROB, NEST_HEIGHT, NEST_SIZE, NUM_NESTS,
 };
 use bevy::{
     ecs::{component::Component, system::Query},
@@ -28,11 +28,11 @@ impl Nest {
         for _i in 0..NUM_NESTS {
             color_weights.push(0.0);
         }
-        return Self {
+        Self {
             color,
             loc,
             color_weights,
-        };
+        }
     }
     #[inline]
     pub fn step_pheromone(&mut self, color: usize) {
@@ -108,7 +108,7 @@ fn gen_hex_coords(w: u32, h: u32) -> Vec<Vec2> {
             coords.push(Vec2 { x, y });
         }
     }
-    return coords;
+    coords
 }
 
 const NEST_SPREAD: f32 = BORDER_PADDING;
@@ -167,10 +167,14 @@ pub fn spawn_nests(
 fn pos_size(t: Transform) -> (Vec3, Vec2) {
     let pos = t.translation;
     let size = t.scale.truncate();
-    return (pos, size);
+    (pos, size)
 }
 
-const FOOD_OFFSET: Vec3 = Vec3 {x: 0., y: 80., z: FOOD_HEIGHT as f32};
+const FOOD_OFFSET: Vec3 = Vec3 {
+    x: 0.,
+    y: 80.,
+    z: FOOD_HEIGHT as f32,
+};
 
 pub fn ant_nest_interactions(
     mut commands: Commands,

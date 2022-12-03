@@ -1,8 +1,8 @@
 use std::f32::consts::PI;
 
 use crate::{
-    Colors, NumAnts, BORDER_PADDING, FOOD_HEIGHT, FOOD_SIZE_V3, MAX_ANTS,
-    NEST_FOOD_REQUEST_PROB, NEST_HEIGHT, NEST_SIZE, NUM_NESTS, NEST_SPREAD, HexagonMesh,
+    Colors, HexagonMesh, NumAnts, BORDER_PADDING, FOOD_HEIGHT, FOOD_SIZE_V3, MAX_ANTS,
+    NEST_FOOD_REQUEST_PROB, NEST_HEIGHT, NEST_SIZE, NUM_NESTS,
 };
 
 use bevy::{
@@ -12,8 +12,12 @@ use bevy::{
     sprite::{collide_aabb::collide, ColorMaterial, MaterialMesh2dBundle},
     utils::default,
 };
+
+#[allow(unused_imports)]
+use rand::seq::SliceRandom;
+
 use rand::{
-    seq::{IteratorRandom, SliceRandom},
+    seq::IteratorRandom,
     Rng,
 };
 
@@ -32,11 +36,11 @@ impl Nest {
         for _i in 0..NUM_NESTS {
             color_weights.push(0.0);
         }
-        return Self {
+        Self {
             color,
             loc,
             color_weights,
-        };
+        }
     }
     #[inline]
     pub fn step_pheromone(&mut self, color: usize, step: f32) {
@@ -106,16 +110,16 @@ fn gen_fib_coords(num_points: usize, max_r: f32) -> Vec<Vec2> {
     let golden_angle: f32 = PI * (3.0 - 5.0_f32.sqrt());
     let mut pnts = vec![Vec2::ZERO; num_points];
     let num_points_f = num_points as f32;
-    for i in 0..num_points {
+    for (i,v) in pnts.iter_mut().enumerate() {
         let i_f = i as f32;
         let theta = (i_f) * golden_angle;
         let r = (i_f.sqrt() / num_points_f.sqrt()) * max_r;
-        pnts[i] = Vec2::from_angle(theta) * r;
+        *v = Vec2::from_angle(theta) * r;
     }
-
-    return pnts;
+    pnts
 }
 
+#[allow(unused)]
 fn gen_hex_coords(w: u32, h: u32) -> Vec<Vec2> {
     let mut coords = Vec::with_capacity((w * h) as usize);
     // step by 2
@@ -127,9 +131,8 @@ fn gen_hex_coords(w: u32, h: u32) -> Vec<Vec2> {
             coords.push(Vec2 { x, y });
         }
     }
-    return coords;
+    coords
 }
-
 
 pub fn spawn_nests(
     mut commands: Commands,
@@ -138,7 +141,6 @@ pub fn spawn_nests(
     colors: Res<Colors>,
     windows: Res<Windows>,
 ) {
-    let mut rng = rand::thread_rng();
     let window = windows.primary();
     let bounds = Vec2 {
         x: window.width(),
@@ -151,7 +153,9 @@ pub fn spawn_nests(
         let e = Entity::from_raw(i as u32);
         nests.push(e);
     }
+
     // hex:
+    // let rng = rand::thread_rng();
     // let hex_bounds = (bounds / NEST_SPREAD).as_uvec2();
     // let mut coords: Vec<Vec2> = gen_hex_coords(hex_bounds.x, hex_bounds.y)
     //     .iter()
@@ -160,10 +164,11 @@ pub fn spawn_nests(
     // coords.as_mut_slice().shuffle(&mut rng);
 
     // fib with > NUM_NESTS:
+    // let rng = rand::thread_rng();
     // let mut coords = gen_fib_coords(100, bounds.min_element()/2.0);
     // coords.as_mut_slice().shuffle(&mut rng);
 
-    let mut coords = gen_fib_coords(NUM_NESTS, bounds.min_element()/2.0);
+    let mut coords = gen_fib_coords(NUM_NESTS, bounds.min_element() / 2.0);
 
     for (color, color_id) in colors.iter() {
         let c = &coords
@@ -190,7 +195,7 @@ pub fn spawn_nests(
 fn pos_size(t: Transform) -> (Vec3, Vec2) {
     let pos = t.translation;
     let size = t.scale.truncate();
-    return (pos, size);
+    (pos, size)
 }
 
 pub fn fade_nest_network_pheremones(mut nests: Query<&mut Nest>, params: Res<PheromoneParams>) {
@@ -199,7 +204,11 @@ pub fn fade_nest_network_pheremones(mut nests: Query<&mut Nest>, params: Res<Phe
     }
 }
 
-const FOOD_OFFSET: Vec3 = Vec3 {x: 0., y: 80., z: FOOD_HEIGHT as f32};
+const FOOD_OFFSET: Vec3 = Vec3 {
+    x: 0.,
+    y: 80.,
+    z: FOOD_HEIGHT as f32,
+};
 
 pub fn ant_nest_network_interactions(
     mut commands: Commands,
@@ -229,7 +238,7 @@ pub fn ant_nest_network_interactions(
                                         mesh: hex_mesh.clone_weak().into(),
                                         material: colors.color_handles[nest.color].clone_weak(),
                                         transform: Transform::from_translation(FOOD_OFFSET)
-                                        .with_scale(FOOD_SIZE_V3),
+                                            .with_scale(FOOD_SIZE_V3),
                                         visibility: Visibility { is_visible: true },
                                         ..default()
                                     },
@@ -241,7 +250,11 @@ pub fn ant_nest_network_interactions(
                             // to be set on the way to target and on the way back
                             ant.parent_color = nest.color;
                             ant.carrying_food = true;
-                            log::info!("Ant reached target nest {} after {} steps", nest.color,ant.steps);
+                            log::info!(
+                                "Ant reached target nest {} after {} steps",
+                                nest.color,
+                                ant.steps
+                            );
                             ant.wipe_mem()
                         } else {
                             // despawn food
@@ -249,7 +262,11 @@ pub fn ant_nest_network_interactions(
                             ant.target_color = ant.parent_color;
                             ant.parent_color = nest.color;
                             ant.carrying_food = false;
-                            log::info!("Ant reached parent nest {} after {} steps", nest.color,ant.steps);
+                            log::info!(
+                                "Ant reached parent nest {} after {} steps",
+                                nest.color,
+                                ant.steps
+                            );
                             ant.wipe_mem()
                         }
                         // let orientation = ant.orientation + PI;

@@ -1,13 +1,14 @@
 use std::{
     collections::VecDeque,
-    f32::consts::{FRAC_PI_2, PI, TAU},
+    f32::consts::{FRAC_PI_2, TAU},
 };
 
-use crate::{
-    ANT_ANIMATION_SPEED, ANT_SCALE, ANT_SPEED, BORDER_PADDING, NUM_NESTS,
-};
+use crate::{ANT_ANIMATION_SPEED, ANT_SCALE, ANT_SPEED, BORDER_PADDING, NUM_NESTS};
 
-use super::{nest::{Nest, NestColors}, DecisionWeights, PheromoneParams, };
+use super::{
+    nest::{Nest, NestColors},
+    DecisionWeights, PheromoneParams,
+};
 
 use bevy::{ecs::component::Component, log, prelude::*};
 use rand::{distributions::WeightedIndex, prelude::*, thread_rng, Rng};
@@ -75,7 +76,7 @@ impl Ant {
     pub fn leave_nest(&mut self) {
         self.prev_nests.truncate(NUM_NESTS);
         self.current_nest = None;
-        self.steps+=1;
+        self.steps += 1;
     }
 
     pub fn prev_nest(&self) -> usize {
@@ -119,7 +120,7 @@ impl AntBundle {
         //     FRAC_PI_2,
         //     ant.orientation
         // );
-        return Self {
+        Self {
             sprite_sheet: SpriteSheetBundle {
                 texture_atlas: ant_texture.clone_weak(),
                 transform: transform.with_scale(ANT_SCALE).with_rotation(q),
@@ -129,9 +130,12 @@ impl AntBundle {
                 ANT_ANIMATION_SPEED,
                 TimerMode::Repeating,
             )),
-            pheromone_timer: AntPheromoneTimer(Timer::from_seconds(ANT_DROP_VISIBLE_PHEROMONE_SPEED, TimerMode::Repeating)),
+            pheromone_timer: AntPheromoneTimer(Timer::from_seconds(
+                ANT_DROP_VISIBLE_PHEROMONE_SPEED,
+                TimerMode::Repeating,
+            )),
             ant,
-        };
+        }
     }
 }
 
@@ -191,7 +195,7 @@ impl Bounds {
                 collision = Some(Self::Down);
             }
         }
-        return collision;
+        collision
     }
 }
 
@@ -207,7 +211,10 @@ pub fn move_ant(
     let mut rng = thread_rng();
 
     let win = windows.primary();
-    let bounds = Vec2 {x: win.width(), y: win.height()};
+    let bounds = Vec2 {
+        x: win.width(),
+        y: win.height(),
+    };
 
     for (mut transform, mut ant) in &mut ants {
         let ant_loc = transform.translation.truncate();
