@@ -1,0 +1,3 @@
+[submodule "iyes_loopless"]
+    path = crates/iyes_loopless
+    url = git@github.com:IyesGames/iyes_loopless.git

@@ -29,7 +29,6 @@ impl Plugin for AntNetworkPlugin {
             .add_startup_system(pheromones::create_pheromone_manager)
             .add_startup_system(nest::spawn_nests)
             .add_startup_system(ant::load_ant_texture)
-            .add_fixed_timestep(Duration::from_millis(250), "color timestep")
             .add_system_set(
                 ConditionSet::new()
                     .run_in_state(GameState::Play)
@@ -60,15 +59,16 @@ impl Plugin for AntNetworkPlugin {
                     .with_system(ant::move_ant)
                     .into(),
             )
-            .add_fixed_timestep_system(
+            .add_fixed_framestep(30, "color timestep")
+            .add_fixed_framestep_system(
                 "color timestep",
                 0,
                 pheromones::create_required_pheromones
                     .run_in_state(GameState::Play)
                     .run_in_state(GameMode::AntNetwork),
             )
-            .add_fixed_timestep_child_stage("color timestep")
-            .add_fixed_timestep_system(
+            .add_fixed_framestep_child_stage("color timestep")
+            .add_fixed_framestep_system(
                 "color timestep",
                 1,
                 pheromones::leave_pheromone_trails

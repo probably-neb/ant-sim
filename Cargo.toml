@@ -11,11 +11,30 @@ opt-level = 1
 opt-level = 3
 
 [dependencies]
-bevy = {version = "0.9", default-features=false}
+bevy = {version = "0.9", default-features=false, features = [
+  "bevy_asset",
+  # "bevy_core_pipeline",
+  "animation",
+  # "bevy_gilrs",
+  # "bevy_scene",
+  "render",
+  # "bevy_render",
+#   "bevy_core_pipeline",
+#   "bevy_pbr",
+#   "bevy_gltf",
+  # "bevy_render",
+  "bevy_sprite",
+#   "bevy_text",
+#   "bevy_ui",
+  "png",
+  # "hdr",
+  # "vorbis",
+  "x11",
+]}
 rand = "0.8.5"
 # bevy-inspector-egui = {version = "0.14.0", optional = true}
 bevy-inspector-egui = {git = "https://github.com/jakobhellermann/bevy-inspector-egui", branch = "rework"}
-iyes_loopless = { version = "0.9.1", features = ["bevy-inspector-egui"] }
+iyes_loopless = { path = "./crates/iyes_loopless", version = "0.9.1", features = ["bevy-inspector-egui"] }
 
 [features]
 dev = ["bevy/dynamic"]
@@ -25,15 +44,25 @@ default = [
   "bevy/animation",
   # "bevy/bevy_gilrs",
   # "bevy/bevy_scene",
-  "bevy/render",
+  # "bevy/render",
+  # "bevy/bevy_render",
+#   "bevy/bevy_core_pipeline",
+#   "bevy/bevy_pbr",
+#   "bevy/bevy_gltf",
+#   "bevy/bevy_render",
+  "bevy/bevy_sprite",
+#   "bevy/bevy_text",
+#   "bevy/bevy_ui",
   "bevy/png",
   # "bevy/hdr",
   # "bevy/vorbis",
   "bevy/x11",
 ]
+
 winit = [
   "bevy/bevy_winit",
 ]
+
 wayland = [
     "bevy/wayland"
 ]
