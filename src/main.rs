@@ -15,9 +15,9 @@ fn main() {
             ..default()
         }));
 
-//         #[cfg(feature = "debug")]
-//         app.add_plugin(WorldInspectorPlugin::new());
-            // .register_inspectable::<PheromoneManager>();
+        // #[cfg(feature = "debug")]
+        // app.add_plugin(WorldInspectorPlugin::new())
+        //     .register_inspectable::<PheromoneManager>();
 
         app.add_startup_system(setup_camera)
         .add_loopless_state(GameMode::AntNetwork)

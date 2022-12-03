@@ -10,7 +10,7 @@ use bevy::prelude::*;
 use iyes_loopless::prelude::*;
 
 #[cfg(feature = "debug")]
-use bevy_inspector_egui::InspectorPlugin;
+use bevy_inspector_egui::{InspectorPlugin, WorldInspectorPlugin, RegisterInspectable};
 
 pub struct AntNetworkPlugin;
 
@@ -82,6 +82,11 @@ impl Plugin for AntNetworkPlugin {
         // .add_system(ant::ant_wander)
         // .add_system(pheromones::print_angle)
         // .add_system(print_camera)
+        use crate::network::pheromones::{PheromoneManager, PheromoneGrid};
+        #[cfg(feature = "debug")]
+        app.add_plugin(WorldInspectorPlugin::new())
+            .register_inspectable::<PheromoneManager>()
+            .register_inspectable::<PheromoneGrid>();
 
         #[cfg(feature = "debug")]
         app.add_plugin(InspectorPlugin::<DecisionWeights>::new());
@@ -89,6 +94,10 @@ impl Plugin for AntNetworkPlugin {
         #[cfg(feature = "debug")]
         app.add_plugin(InspectorPlugin::<PheromoneParams>::new());
 
+        #[cfg(feature = "debug")]
+        let mut registry = app
+            .world
+            .get_resource_mut::<InspectableRegistry
     }
 }
 
@@ -139,4 +148,3 @@ impl Default for PheromoneParams {
         }
     }
 }
-

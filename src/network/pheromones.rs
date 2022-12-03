@@ -13,7 +13,7 @@ const PHEROMONE_GRANULARITY_F: f32 = PHEROMONE_GRANULARITY as f32;
 const PHEROMONE_SCALE: f32 = 4.0;
 // const PHEROMONE_FADE_PERCENTAGE: f32 = 1.0 - PHEROMONE_FADE_RATE;
 
-#[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
+#[cfg_attr(feature = "debug", derive(Inspectable))]
 #[derive(Debug, Component)]
 pub struct Pheromone {
     // TODO: NUM_COLORS not num nests
@@ -57,7 +57,24 @@ fn contained(target: f32, min: f32, max: f32) -> bool {
     return target <= max && target >= min;
 }
 
-// #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
+// #[cfg_attr(feature = "debug", derive(Inspectable))]
+#[derive(Debug,Clone, Deref, DerefMut)]
+pub struct PheromoneGrid(Vec<Option<Entity>>);
+
+#[cfg(feature = "debug")]
+impl Inspectable for PheromoneGrid {
+    type Attributes = ();
+    fn ui(&mut self, ui: &mut egui::Ui, options: Self::Attributes, context: &mut Context) -> bool {
+        let total_len = self.len();
+        let num_filled = self.iter().filter(|c| c.is_some()).count();
+        ui.label(format!("Cells Filled: {}/{}", num_filled, total_len));
+        false
+    }
+}
+
+
+
+#[cfg_attr(feature = "debug", derive(Inspectable))]
 #[derive(Debug, Component)]
 pub struct PheromoneManager {
     //TODO: add field for window dims instead of passing them around constantly
