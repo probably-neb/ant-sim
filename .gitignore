@@ -14,3 +14,4 @@ assets/large_color_pallete.txt
 flamegraph.svg
 TODO.yml
 Cargo.lock
+src/wander
