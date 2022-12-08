@@ -7,6 +7,8 @@ perf.data
 Cargo.lock
 site-assets/first_frame.bmp
 site-assets/first_frame.png
+data
+collect_log_info.py
 perf.data.old
 plot_fps.py
 output.txt
