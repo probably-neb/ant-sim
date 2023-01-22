@@ -5,7 +5,7 @@ pub use iyes_loopless::prelude::*;
 // pub mod nest;
 // pub mod pheromones;
 pub mod network;
-pub mod wander;
+// pub mod wander;
 
 const NEST_SPREAD: f32 = BORDER_PADDING;
 
