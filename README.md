@@ -1,4 +1,5 @@
 # ANT SIM
+![LOC](https://tokei.rs/b1/github/probably-neb/ant-sim?category=code)
 
 This project is a personal exploration into ant simulations and the state of game engines in the rust programming language. It was heavily inspired by the excellent video by [Sebastian Lague](https://www.youtube.com/watch?v=X-iSQQgOd1A) that you should definitely check out (even if you don't think you're interested). 
 
