@@ -1,0 +1,20 @@
+[tools]
+rust = { version = "1.99.0", targets = "wasm32-unknown-unknown" }
+# must match the wasm-bindgen version in Cargo.lock
+"github:wasm-bindgen/wasm-bindgen" = "0.2.129"
+"npm:wrangler" = "4"
+
+[tasks.build]
+run = [
+  "cargo build --release --locked --target wasm32-unknown-unknown",
+  "rm -rf dist && cp -r web dist && cp -r assets dist/bin/assets",
+  "wasm-bindgen --target web --no-typescript --out-dir dist/bin target/wasm32-unknown-unknown/release/ant-sim.wasm",
+]
+
+[tasks.serve]
+depends = ["build"]
+run = "python3 -m http.server -d dist"
+
+[tasks.deploy]
+depends = ["build"]
+run = "wrangler pages deploy dist --project-name ant-sim"

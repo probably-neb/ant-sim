@@ -1,10 +1,9 @@
 /target
 *.mp4
-bin/*
+/dist
 site-assets/make-time-lapse.sh
 site-assets/trim-time-lapse.sh
 perf.data
-Cargo.lock
 site-assets/first_frame.bmp
 site-assets/first_frame.png
 perf.data.old
@@ -13,5 +12,7 @@ output.txt
 assets/large_color_pallete.txt
 flamegraph.svg
 TODO.yml
-Cargo.lock
 src/wander
+.DS_Store
+.wrangler
+mise.local.toml

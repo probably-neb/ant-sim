@@ -1,4 +1,0 @@
-[submodule "iyes_loopless"]
-    path = crates/iyes_loopless
-	url = git@github.com:probably-neb/iyes_loopless-fixedframestep.git
-    branch = feat-fixedframestep

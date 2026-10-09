@@ -10,6 +10,10 @@ opt-level = 1
 [profile.dev.package."*"]
 opt-level = 3
 
+# keep the wasm under Cloudflare Pages' 25 MiB per-file limit
+[profile.release]
+strip = true
+
 [dependencies]
 bevy = {version = "0.9", default-features=false, features = [
   "bevy_asset",
@@ -33,8 +37,11 @@ bevy = {version = "0.9", default-features=false, features = [
 ]}
 rand = "0.8.5"
 # bevy-inspector-egui = {version = "0.14.0", optional = true}
-bevy-inspector-egui = {git = "https://github.com/jakobhellermann/bevy-inspector-egui", branch = "rework"}
-iyes_loopless = { path = "./crates/iyes_loopless", version = "0.9.1", features = ["bevy-inspector-egui"] }
+bevy-inspector-egui = "0.16"
+# wasm32-unknown-unknown needs an explicit randomness source
+getrandom = { version = "0.2", features = ["js"] }
+uuid = { version = "1", features = ["js"] }
+iyes_loopless = { git = "https://github.com/probably-neb/iyes_loopless-fixedframestep", rev = "da625204386e58cd5b0ecb562608692611cedc02", features = ["bevy-inspector-egui"] }
 
 [features]
 dev = ["bevy/dynamic"]
